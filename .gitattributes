@@ -1,0 +1,18 @@
+# Canonical LF in the repo and in every working tree (Windows included), so
+# checkouts match Linux/CI and the formatter's LF line endings are satisfied.
+# This makes line-ending behavior independent of each contributor's core.autocrlf.
+* text=auto eol=lf
+
+# Fixture corpus — OOXML packages are zip archives. Never touch line endings, and
+# never diff them as text: a one-byte change would print the whole file.
+*.pptx binary
+*.potx binary
+*.xlsx binary
+*.xlsm binary
+*.xltx binary
+*.docx binary
+*.dotx binary
+
+# Release-adjacent binaries.
+*.zip  binary
+*.tar.gz binary

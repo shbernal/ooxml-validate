@@ -1,0 +1,33 @@
+# Logs
+*.log
+
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# A stray npm lockfile would shadow pnpm-lock.yaml; keep it out of history.
+package-lock.json
+
+# .NET build output
+bin/
+obj/
+
+# The downloaded-binary cache, when a contributor points it inside the repo.
+# The real default lives in ~/.cache/ooxml-validator/.
+.cache/
+
+# Editors
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# THE scratch directory: throwaway probes, dumps, downloaded archives. Anything
+# here is regenerable and never committed. .gitkeep is tracked so a fresh clone
+# can write here immediately. (Contents, not the directory: git cannot re-include
+# a file whose parent directory is itself excluded.)
+.tmp/*
+!.tmp/.gitkeep

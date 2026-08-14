@@ -1,0 +1,68 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    "group:monorepos",
+    "group:recommended"
+  ],
+  "timezone": "UTC",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "description": "Renovate already exempts security fixes from the schedule above — the built-in defaults for this object set `schedule: []` and `prCreation: \"immediate\"`, so they land as soon as they are found rather than waiting for Monday. Do not restate those here; the only additions are a label so they are sortable and `osvVulnerabilityAlerts` above, which sources advisories from osv.dev as well as GitHub's own feed.",
+    "labels": ["dependencies", "security"]
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "packageRules": [
+    {
+      "description": "Bump devDependency ranges eagerly: nothing downstream consumes them, so a raised floor costs nobody anything and keeps the lockfile honest about what CI actually ran.",
+      "matchDepTypes": ["devDependencies"],
+      "rangeStrategy": "bump"
+    },
+    {
+      "description": "Never narrow what consumers can satisfy. `dependencies` keep their published range until a release falls outside it — this is a library, so a bumped floor is a breaking change for downstreams.",
+      "matchDepTypes": ["dependencies", "optionalDependencies"],
+      "rangeStrategy": "replace"
+    },
+    {
+      "description": "Separate major updates into their own PRs; keep them off the weekly batch.",
+      "matchUpdateTypes": ["major"],
+      "schedule": ["before 6am on the first day of the month"]
+    },
+    {
+      "description": "Group all @types/* devDependencies together.",
+      "matchPackageNames": ["@types/**"],
+      "groupName": "type definitions"
+    },
+    {
+      "description": "DocumentFormat.OpenXml is the pin this repo exists to centralize: after ts-pptx and ts-xlsx migrate, neither of them pins an Open XML SDK version and this is the only place it is watched. A bump here silently moves BOTH consumers' validation baselines, so it never batches with anything else, never automerges, and is labelled so the fixture-diagnostic delta in its diff gets read before merge. See docs/sdk-pin.md.",
+      "matchManagers": ["nuget"],
+      "matchPackageNames": ["DocumentFormat.OpenXml"],
+      "groupName": null,
+      "automerge": false,
+      "labels": ["dependencies", "sdk-pin", "baseline-moving"],
+      "schedule": ["before 6am on monday"],
+      "prBodyNotes": [
+        ":warning: This PR moves the validation baseline for every consumer of this package. CI regenerates `fixtures/diagnostics.snapshot.json`; the delta MUST be in this PR's own diff and MUST be read before merging. Do not merge a snapshot change you have not accounted for."
+      ]
+    },
+    {
+      "description": "The rest of the NuGet tree (test-only packages) batches normally.",
+      "matchManagers": ["nuget"],
+      "excludePackageNames": ["DocumentFormat.OpenXml"],
+      "groupName": "nuget (test tooling)"
+    },
+    {
+      "description": "Pin GitHub Actions to commit SHAs and batch their updates. The release workflow generates build provenance attestations, so which action version ran is part of the supply-chain story, not an implementation detail.",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true,
+      "groupName": "github-actions"
+    }
+  ]
+}

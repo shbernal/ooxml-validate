@@ -1,0 +1,9 @@
+{
+  "//": "Strict type-safety gate for the harness tree (test/ + scripts/), held to the identical bar as src/. Node 24 runs these .ts files directly via type-stripping; this config exists to ENFORCE the gate (tsc --noEmit), not to build.",
+  "extends": "./tsconfig.json",
+  "//tsBuildInfoFile": "Its own file, never the inherited one — see the note in tsconfig.json.",
+  "compilerOptions": {
+    "tsBuildInfoFile": "node_modules/.cache/ooxml-validator/harness.tsbuildinfo"
+  },
+  "include": ["test/**/*.ts", "scripts/**/*.ts"]
+}

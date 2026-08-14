@@ -1,0 +1,16 @@
+# Lefthook's postinstall is denied, not merely unlisted. All it does is
+# `lefthook install -f`, and that `-f` is the one thing scripts/install-hooks.ts
+# is written to refuse: with core.hooksPath pointing at a machine-wide hooks
+# directory, forcing writes lefthook's wrappers in there and renames whatever
+# stood in their place to `.old`, disarming every other repo on the machine. The
+# prepare script decides that question properly, per checkout. The binary itself
+# needs no build step, it arrives prebuilt in lefthook-<os>-<arch>, so denying
+# this costs only the hook install we did not want.
+allowBuilds:
+  lefthook: false
+
+# Wait a day before adopting a new release. The delay is not about the code being
+# wrong; it is about giving a compromised publish time to be caught by someone
+# else first. This package's dependency surface is small enough that the cost is
+# nil.
+minimumReleaseAgeStrict: true

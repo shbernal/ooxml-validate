@@ -1,0 +1,14 @@
+{
+  "name": "ooxml-validator",
+  "description": "Documentation for ooxml-validator.",
+  "navigation": [
+    {
+      "group": "Start",
+      "pages": ["index", "architecture"]
+    },
+    {
+      "group": "Reference",
+      "pages": ["reference/index", "sdk-pin", "troubleshooting"]
+    }
+  ]
+}

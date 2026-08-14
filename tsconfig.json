@@ -1,0 +1,35 @@
+{
+  "//": "Strict type-safety gate for src/. Node 24 runs these .ts files directly via type-stripping, so this config exists to ENFORCE the gate (tsc --noEmit); tsconfig.build.json is what emits.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023"],
+    "types": ["node"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    "noUncheckedSideEffectImports": true,
+    "erasableSyntaxOnly": true,
+
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": false,
+    "noEmit": true,
+
+    "incremental": true,
+    "tsBuildInfoFile": "node_modules/.cache/ooxml-validator/src.tsbuildinfo"
+  },
+  "//erasableSyntaxOnly": "The dev/test workflow runs these .ts files through Node's type-stripping, which refuses syntax that is not erasable — an enum, a namespace, a parameter property. Without this flag tsc accepts all three and the failure surfaces later as a parse error from `node --test`, pointing at the syntax rather than at the choice.",
+  "//tsBuildInfoFile": "Every config that extends this one MUST name its own: an inherited relative path resolves against THIS directory, so two projects would otherwise share one buildinfo and each would invalidate the other's.",
+  "include": ["src/**/*.ts"]
+}

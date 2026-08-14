@@ -1,0 +1,38 @@
+# The gate. One job, running the same `verify` script the pre-push hook runs —
+# re-listing the individual checks here would be a second definition of
+# "everything" to keep in sync, and this is the copy that would drift.
+#
+# No .NET here on purpose. The TypeScript half must be buildable and testable with
+# no SDK installed, because that is the promise made to consumers; this job is
+# where that claim gets tested rather than assumed. The oracle's own job arrives
+# with the oracle.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  node:
+    name: node
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run verify
+      - run: pnpm run build
+      - run: pnpm run docs:check

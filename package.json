@@ -1,0 +1,72 @@
+{
+  "name": "ooxml-validator",
+  "version": "0.1.0-rc.0",
+  "description": "Validate OOXML documents (pptx, xlsx, docx) against the Open XML SDK schema validator, from Node.",
+  "license": "MIT",
+  "author": "shbernal",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shbernal/ooxml-validate.git"
+  },
+  "homepage": "https://github.com/shbernal/ooxml-validate#readme",
+  "bugs": {
+    "url": "https://github.com/shbernal/ooxml-validate/issues"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.21.0",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "prepare": "node scripts/install-hooks.ts",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "pnpm run clean && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "lint": "biome check --error-on-warnings src scripts test",
+    "lint:fix": "biome check --write --error-on-warnings src scripts test",
+    "format": "biome format --write src scripts test",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "oracle:build": "dotnet build oracle/OoxmlValidator.csproj -c Release",
+    "oracle:test": "dotnet test oracle.tests/OoxmlValidator.Tests.csproj",
+    "verify": "pnpm run lint && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run build",
+    "docs:list": "python3 scripts/docs-list.py",
+    "docs:check": "python3 scripts/docs-check.py",
+    "docs:new": "python3 scripts/docs-new.py",
+    "docs:init": "python3 scripts/docs-init.py"
+  },
+  "keywords": [
+    "ooxml",
+    "validation",
+    "openxml",
+    "pptx",
+    "xlsx",
+    "docx",
+    "office-open-xml",
+    "schema"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "2.5.8",
+    "@types/node": "^24.13.3",
+    "lefthook": "^2.1.10",
+    "typescript": "^7.0.2"
+  }
+}
