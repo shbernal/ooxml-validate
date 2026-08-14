@@ -60,9 +60,27 @@ asks for, so it and `PACKAGE_VERSION` are the same number by construction.
 
 ## Report shape
 
+Frozen by the oracle and documented in full in `README.md`. In short:
+`{format, sdkVersion, results[{file, valid, errors[{id, type, description,
+partUri, xpath}]}]}`.
+
 Every input file appears with an explicit `valid` flag; clean files are not
-omitted. The full JSON schema and the `ValidationReport` / `ValidationResult` /
-`ValidationDiagnostic` types land with the oracle and are documented here then.
+omitted. `file` is echoed verbatim. Output is deterministic. Diagnostics are
+capped at 1000 per file. `type` is one of `Schema`, `Semantic`,
+`MarkupCompatibility`, `Package`.
+
+The TypeScript `ValidationReport` / `ValidationResult` / `ValidationDiagnostic`
+types mirror this exactly and land with the Node package.
 
 Until 1.0 this shape may change. Every change gets a CHANGELOG entry and a
 version bump.
+
+## Oracle CLI
+
+```
+ooxml-validator [--format <FileFormatVersions>] [--files-from <path|->] [<file> ...]
+ooxml-validator --version
+```
+
+`--files-from` reads newline-delimited paths, `-` meaning stdin, and composes
+with explicit path arguments. `--version` prints `{tool, sdkVersion}` as JSON.

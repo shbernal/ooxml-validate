@@ -1,0 +1,87 @@
+{
+  "format": "Microsoft365",
+  "sdkVersion": "3.5.1",
+  "results": [
+    {
+      "file": "clean.docx",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "file": "clean.pptx",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "file": "clean.xlsx",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "file": "corrupt.pptx",
+      "valid": false,
+      "errors": [
+        {
+          "id": "PackageOpenError",
+          "type": "Package",
+          "description": "File contains corrupted data.",
+          "partUri": null,
+          "xpath": null
+        }
+      ]
+    },
+    {
+      "file": "dirty.docx",
+      "valid": false,
+      "errors": [
+        {
+          "id": "Sch_UndeclaredAttribute",
+          "type": "Schema",
+          "description": "The \u0027http://schemas.openxmlformats.org/wordprocessingml/2006/main:bogus\u0027 attribute is not declared.",
+          "partUri": "/word/document.xml",
+          "xpath": "/w:document[1]/w:body[1]/w:p[1]"
+        }
+      ]
+    },
+    {
+      "file": "dirty.pptx",
+      "valid": false,
+      "errors": [
+        {
+          "id": "Sch_UndeclaredAttribute",
+          "type": "Schema",
+          "description": "The \u0027bogus\u0027 attribute is not declared.",
+          "partUri": "/ppt/slides/slide1.xml",
+          "xpath": "/p:sld[1]"
+        }
+      ]
+    },
+    {
+      "file": "dirty.xlsx",
+      "valid": false,
+      "errors": [
+        {
+          "id": "Sem_AttributeValueDataTypeDetailed",
+          "type": "Schema",
+          "description": "The attribute \u0027copies\u0027 has invalid value \u00270\u0027. The MinInclusive constraint failed. The value must be greater than or equal to 1.",
+          "partUri": "/xl/worksheets/sheet1.xml",
+          "xpath": "/x:worksheet[1]/x:pageSetup[1]"
+        },
+        {
+          "id": "Sem_AttributeValueDataTypeDetailed",
+          "type": "Schema",
+          "description": "The attribute \u0027horizontalDpi\u0027 has invalid value \u00270\u0027. The MinInclusive constraint failed. The value must be greater than or equal to 1.",
+          "partUri": "/xl/worksheets/sheet1.xml",
+          "xpath": "/x:worksheet[1]/x:pageSetup[1]"
+        },
+        {
+          "id": "Sem_AttributeValueDataTypeDetailed",
+          "type": "Schema",
+          "description": "The attribute \u0027verticalDpi\u0027 has invalid value \u00270\u0027. The MinInclusive constraint failed. The value must be greater than or equal to 1.",
+          "partUri": "/xl/worksheets/sheet1.xml",
+          "xpath": "/x:worksheet[1]/x:pageSetup[1]"
+        }
+      ]
+    }
+  ]
+}

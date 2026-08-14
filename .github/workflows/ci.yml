@@ -2,10 +2,10 @@
 # re-listing the individual checks here would be a second definition of
 # "everything" to keep in sync, and this is the copy that would drift.
 #
-# No .NET here on purpose. The TypeScript half must be buildable and testable with
-# no SDK installed, because that is the promise made to consumers; this job is
-# where that claim gets tested rather than assumed. The oracle's own job arrives
-# with the oracle.
+# Two jobs, split along the SDK boundary. The `node` job installs no .NET at all,
+# on purpose: the TypeScript half must be buildable and testable without an SDK,
+# because that is the promise made to consumers, and this is where the claim gets
+# tested rather than assumed.
 name: CI
 
 on:
@@ -36,3 +36,28 @@ jobs:
       - run: pnpm run verify
       - run: pnpm run build
       - run: pnpm run docs:check
+
+  oracle:
+    name: oracle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Locked mode, not a convenience flag: without it the lock file is a
+      # suggestion, and a transitive bump can move the validation baseline for every
+      # consumer of this package with nothing in any diff to show for it. This step
+      # failing means the lock file and the project disagree — regenerate it in the
+      # PR that caused it. See docs/sdk-pin.md.
+      - run: dotnet restore oracle/OoxmlValidator.csproj --locked-mode
+      - run: dotnet restore oracle.tests/OoxmlValidator.Tests.csproj --locked-mode
+
+      - run: dotnet build oracle.tests/OoxmlValidator.Tests.csproj --no-restore
+      - run: dotnet test oracle.tests/OoxmlValidator.Tests.csproj --no-build
+
+      # The snapshot test above already fails on a moved diagnostic. This makes the
+      # *other* failure mode loud: a run that rewrote the snapshot and left the
+      # working tree dirty, which would otherwise pass silently.
+      - run: git diff --exit-code -- fixtures/

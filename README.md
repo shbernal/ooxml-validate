@@ -64,9 +64,57 @@ Diagnostics go to stdout as JSON; tool failures go to stderr as text. A file tha
 could not be opened is a `2`, never a `0` — the distinction between "clean" and
 "never actually checked" is the whole point of the exit codes.
 
-**Every input file appears in the report**, each with an explicit `valid` flag.
-Clean files are not omitted. Do not write code that infers cleanliness from
-absence.
+### The report
+
+```jsonc
+{
+  "format": "Microsoft365",   // the conformance target that was applied
+  "sdkVersion": "3.5.1",      // the Open XML SDK actually loaded
+  "results": [
+    {
+      "file": "deck.pptx",    // echoed back exactly as given
+      "valid": false,
+      "errors": [
+        {
+          "id": "Sch_UndeclaredAttribute",
+          "type": "Schema",   // Schema | Semantic | MarkupCompatibility | Package
+          "description": "The 'bogus' attribute is not declared.",
+          "partUri": "/ppt/slides/slide1.xml",  // null when unattributable
+          "xpath": "/p:sld[1]"                  // null when unattributable
+        }
+      ]
+    }
+  ]
+}
+```
+
+Four properties of this output that consumers may rely on:
+
+**Every input file appears, each with an explicit `valid` flag.** Clean files are
+not omitted. Do not write code that infers cleanliness from absence.
+
+**`file` is echoed verbatim** — not resolved, not canonicalized, not relabelled.
+If you pass a relative path you get that relative path back. Callers validating
+in-memory content therefore own their own temp-path → handle mapping; the CLI has
+no label or alias channel, so `file` has exactly one meaning.
+
+**Output is deterministic.** Results are ordered by path, diagnostics by
+`(partUri, xpath, id, description)`, all ordinal. The same inputs in a different
+argument order produce byte-identical stdout.
+
+**A package that will not open is a finding, not a crash.** It becomes a
+`PackageOpenError` diagnostic on that file, the rest of the batch is still
+validated, and the exit code is `1`. A path that names nothing readable is a
+different thing entirely and exits `2`.
+
+Errors are capped at 1000 per file.
+
+### Batching
+
+Pass `--files-from <path>` to read newline-delimited paths from a file, or
+`--files-from -` to read them from stdin. It composes with explicit path
+arguments. This is how large corpora are validated without hitting `ARG_MAX`;
+duplicate paths collapse to one result.
 
 ### Conformance target
 

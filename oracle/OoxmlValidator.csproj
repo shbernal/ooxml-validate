@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>ooxml-validator</AssemblyName>
+    <RootNamespace>OoxmlValidator</RootNamespace>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- The version the CLI reports. The release workflow overrides it by passing
+         a Version property equal to the npm version, because the npm version and
+         the binary version are the same number by design (see README). A local
+         build says 0.0.0-dev, which is true: it is not any release. -->
+    <Version>0.0.0-dev</Version>
+
+    <!-- Not optional. Without it the lock file is a suggestion rather than a
+         constraint, and a transitive bump can move the validation baseline for
+         every consumer of this package with nothing in any diff to show for it.
+         CI restores in locked mode. See docs/sdk-pin.md. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The test project drives Program.Main directly rather than shelling out,
+         so the CLI's internals are visible to it and to nothing else. -->
+    <InternalsVisibleTo Include="OoxmlValidator.Tests" />
+  </ItemGroup>
+
+  <!-- How the release binaries are published, and why none of it is written here.
+
+       The release workflow publishes self-contained single-file binaries per RID:
+
+           dotnet publish oracle/OoxmlValidator.csproj -c Release -r <rid>
+               -p:SelfContained=true
+               -p:PublishSingleFile=true
+               -p:IncludeNativeLibrariesForSelfExtract=true
+
+       Those properties stay on the command line rather than in this file because
+       both of the obvious ones poison something if set here:
+
+       * PublishSingleFile makes the SDK add Microsoft.NET.ILLink.Tasks as a DIRECT
+         dependency pinned to the exact SDK patch level. That lands in
+         packages.lock.json, and a locked restore then fails on any machine whose
+         SDK patch differs — including every CI runner after a .NET update, with no
+         NuGet version for Renovate to bump. Measured: the property's mere presence
+         is enough. Keeping it out is what lets the lock file describe only the
+         Open XML SDK, which is the one thing it exists to pin.
+
+       * SelfContained is not publish-only. Setting it makes every ordinary
+         `dotnet build` produce RID-specific self-contained output.
+
+       Trimming stays OFF, which is the default, so it is not written out either
+       (PublishTrimmed=false pulls in ILLink for the same reason as above). It must
+       stay off: the Open XML SDK reaches its generated schema types by reflection,
+       a trimmer cannot see those references, and it will happily remove them. The
+       failure mode is not a crash — it is validation that silently stops checking
+       part of the schema and calls everything clean. A ~110 MB binary is the
+       correct price for an oracle whose entire job is to be right. -->
+
+  <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
+  </ItemGroup>
+
+</Project>
