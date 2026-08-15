@@ -175,6 +175,49 @@ unobtainable binary throws, because a silently-skipped schema suite is green
 while proving nothing and obtaining the binary is part of the job. Locally it
 writes one notice to stderr and returns `false`.
 
+## In CI
+
+Nothing to install — but three things are worth setting up once, because both
+consumer repos hit all three.
+
+**Cache the binary, keyed on your lockfile.** The fetch is ~42 MB and happens on
+first use, not on `postinstall`. The lockfile is the right key because the npm
+version *is* the binary version: a bump changes both at once, so a lockfile
+change is exactly when the old entry stops being the right one.
+
+```yaml
+- uses: actions/cache@v4
+  with:
+    path: ~/.cache/ooxml-validate
+    key: ooxml-oracle-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+```
+
+**Give the fetch a `GH_TOKEN`.** The download verifies build provenance as well
+as the checksum, and `gh attestation verify` needs a token to reach GitHub's
+attestation API. That check fails closed, so without a token the job fails —
+in the right direction, for the wrong reason. Resolving the binary in a step of
+its own also puts a download failure where the download's own error message is,
+rather than inside your test harness:
+
+```yaml
+- name: Warm the oracle
+  env:
+    GH_TOKEN: ${{ github.token }}
+  run: pnpm exec ooxml-validate --version
+```
+
+**On pnpm, exclude the package from `minimumReleaseAge`** if you want a fresh
+release before its cooling-off period elapses. Note the default is invisible:
+`pnpm config get minimumReleaseAge` reports `undefined` while pnpm still enforces
+1440 minutes. Exclude by bare name, never `name@version` — the policy is checked
+against the *lockfile*, so a version-pinned exclusion names the version you are
+leaving and the one that gets rejected is the one you are on.
+
+```yaml
+minimumReleaseAgeExclude:
+  - ooxml-validate
+```
+
 ## Versioning
 
 **The npm version and the binary version are the same number, deliberately.**

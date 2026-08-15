@@ -52,6 +52,23 @@ CI runs steps 3 and 5's check; step 4 is a human. Renovate labels these PRs
 `baseline-moving` and never groups or automerges them, so they cannot ride along
 in a batch nobody reads closely.
 
+## What the last bump actually cost
+
+Recorded because it is the only measurement anyone has of how much an SDK bump
+moves, and because it is easy to read the wrong lesson off it.
+
+Adopting this oracle put `ts-pptx` from **3.2.0 onto 3.5.1**. Before migrating it,
+its whole fixture corpus — 197 decks — went through both oracles at
+`Microsoft365` and the diagnostics were diffed: **identical, file for file and
+fingerprint for fingerprint.** Zero new, zero gone. The only difference anywhere
+in the corpus was how a corrupt package gets described, which is this project's
+own contract change and not an SDK one.
+
+The lesson is *not* that the guardrail above is unnecessary. The SDK sat still
+across those three releases for that corpus, which is a fact about those releases,
+not a promise about the next one. What it does show is what a clean bump looks
+like: a snapshot delta that is empty, and a reviewer who can see that it is.
+
 ## The rule that is not negotiable
 
 **Diagnostics get baselined, never suppressed.** When a bump surfaces new errors

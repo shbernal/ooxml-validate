@@ -35,6 +35,34 @@ this only blocks work inside `oracle/`.
 validation baseline for every consumer — it belongs in a deliberate bump with the
 diagnostic snapshot delta beside it. See [The SDK pin](sdk-pin.md).
 
+## The binary downloads locally but the same step fails in CI
+
+**Symptom.** First use works on a laptop and fails on a runner, in the
+attestation check rather than the download.
+
+**Cause.** The archive's build provenance is verified with `gh attestation
+verify`, which needs a token to query GitHub's attestation API, and the check
+fails closed by design.
+
+**Fix.** Put `GH_TOKEN: ${{ github.token }}` on the step that first resolves the
+binary — see "In CI" in `README.md`. `OOXML_VALIDATE_SKIP_ATTESTATION` exists for
+environments with genuinely no route to that API; reaching for it because a token
+is missing trades a real supply-chain check for a saved line of YAML.
+
+## `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`, naming a version you are not installing
+
+**Symptom.** `pnpm add -D ooxml-validate@<new>` is refused for being too fresh,
+and the version pnpm names in the error is the *older* one already installed.
+
+**Cause.** The policy is checked against the lockfile before the new resolution
+lands, so an exclusion written as `ooxml-validate@<old>` covers the version being
+replaced and nothing else. Every bump then has to edit the exclusion in the same
+breath, and until it does, the entry protects the wrong version.
+
+**Fix.** Exclude by bare package name in `pnpm-workspace.yaml`. Also worth knowing
+that `pnpm config get minimumReleaseAge` reports `undefined` while pnpm enforces
+1440 minutes, so the policy is invisible until it fires.
+
 ## Git hooks did not install
 
 **Symptom.** Commits and pushes run no checks.
