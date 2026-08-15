@@ -10,11 +10,23 @@
 # README), so the order matters: binaries and their attestations must be on the
 # release before the package that points at them is on the registry.
 #
-# ONE-TIME SETUP, without which the npm stage cannot work:
-#   * Configure trusted publishing for `ooxml-validator` on npmjs.com, naming this
-#     repository, THIS FILE'S NAME (release.yml) and the `npm-publish` environment.
-#     npm checks all three; there is no token anywhere in this repo.
-#   * Restrict the `npm-publish` environment to tags.
+# THE npm STAGE IS OFF UNTIL IT IS SWITCHED ON.
+#
+# It runs only when the repository variable `NPM_PUBLISH_ENABLED` is `true`. That is
+# not a feature flag for its own sake: npm's trusted publishing generally wants the
+# package to exist before a publisher can be configured for it, so the very first
+# publish is a manual one and this job would have nothing to do but fail. A skipped
+# job that says why beats a red X on a release that is otherwise perfect.
+#
+# To switch it on, once:
+#   1. Publish `ooxml-validator` manually, so the package exists.
+#   2. Configure trusted publishing for it on npmjs.com, naming this repository,
+#      THIS FILE'S NAME (release.yml) and the `npm-publish` environment. npm checks
+#      all three; there is no token anywhere in this repo.
+#   3. Restrict the `npm-publish` environment to tags.
+#   4. `gh variable set NPM_PUBLISH_ENABLED --body true`
+#
+# Then rehearse before trusting it: dispatch with dry_run on and read the result.
 #
 # Rehearsing: dispatch manually with dry_run left on. That builds and smoke-tests all
 # five binaries and generates the checksums, then stops short of every write — no
@@ -327,6 +339,10 @@ jobs:
   npm:
     name: npm publish
     needs: [resolve, github-release]
+    # Off until trusted publishing exists — see the header. Everything above this job
+    # is independent of it, so a release still ships complete, attested binaries with
+    # this skipped.
+    if: vars.NPM_PUBLISH_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

@@ -11,8 +11,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-Nothing published yet. The first release will be a `0.1.0-rc.N` prerelease under
-the `next` dist-tag.
+## [0.0.1] — 2026-08-15
+
+First release. Deliberately a small version number: the contract is not frozen,
+and this exists so the download, checksum and attestation paths get exercised by
+a real install rather than by a local link.
 
 ### Added
 
