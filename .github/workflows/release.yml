@@ -1,0 +1,457 @@
+# Cutting a release.
+#
+# One workflow, three stages: build the five binaries, publish them to a GitHub
+# Release with checksums and provenance, then publish the npm package. They are in
+# one file rather than chained because a release created with GITHUB_TOKEN does not
+# trigger another workflow — a `release: published` listener would simply never fire.
+#
+# The npm package fetches its binaries from the release tagged with its own version
+# (the npm version and the binary version are the same number, deliberately — see the
+# README), so the order matters: binaries and their attestations must be on the
+# release before the package that points at them is on the registry.
+#
+# ONE-TIME SETUP, without which the npm stage cannot work:
+#   * Configure trusted publishing for `ooxml-validator` on npmjs.com, naming this
+#     repository, THIS FILE'S NAME (release.yml) and the `npm-publish` environment.
+#     npm checks all three; there is no token anywhere in this repo.
+#   * Restrict the `npm-publish` environment to tags.
+#
+# Rehearsing: dispatch manually with dry_run left on. That builds and smoke-tests all
+# five binaries and generates the checksums, then stops short of every write — no
+# GitHub Release, no attestation, no registry publish. `npm publish --dry-run` still
+# runs, because the one failure a rehearsal exists to catch is a rejected identity.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to build or rehearse (e.g. v0.1.0-rc.1)
+        type: string
+        required: true
+      dry_run:
+        description: Rehearse everything except the registry write
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # What is being released. Computed once, in its own job, rather than in a
+  # workflow-level `env`: the two triggers carry the tag in different places, and
+  # which contexts are readable where differs between them. One job, one answer,
+  # and every job below reads it from here.
+  # ---------------------------------------------------------------------------
+  resolve:
+    name: resolve the tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.target.outputs.tag }}
+      prerelease: ${{ steps.target.outputs.prerelease }}
+    steps:
+      - id: target
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ "${EVENT}" = "push" ]; then tag="${REF_NAME}"; else tag="${INPUT_TAG}"; fi
+          [ -n "${tag}" ] || { echo "::error::no tag to release"; exit 1; }
+          case "${tag}" in
+            v*) ;;
+            *) echo "::error::${tag} is not a v-prefixed release tag"; exit 1 ;;
+          esac
+          # SemVer spells a pre-release with a hyphen. This decides the GitHub
+          # Release's prerelease flag and whether npm gets `--tag next` — a
+          # pre-release must never take `latest` out from under `npm install`.
+          case "${tag}" in
+            *-*) prerelease=true ;;
+            *)   prerelease=false ;;
+          esac
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "prerelease=${prerelease}" >> "$GITHUB_OUTPUT"
+          echo "releasing ${tag} (prerelease=${prerelease})"
+
+  # ---------------------------------------------------------------------------
+  # The gate. Runs before anything is built, because the publish cannot perform it.
+  # ---------------------------------------------------------------------------
+  pin:
+    name: the lock file pins the dependency graph
+    needs: resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.resolve.outputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      # This has to be its own step rather than `-p:RestoreLockedMode=true` on the
+      # publish, and the reason is not a preference. Publishing adds two things the
+      # lock file does not describe: the runtime identifier (the lock file has none),
+      # and Microsoft.NET.ILLink.Tasks, which PublishSingleFile pulls in pinned to the
+      # exact SDK patch. Measured — a locked publish fails NU1004 on both counts.
+      #
+      # Keeping the lock file free of the SDK-pinned package is what lets it describe
+      # only the Open XML SDK, which is the one thing it exists to pin. So the pin is
+      # verified here, on the plain dependency graph, and a dependency the lock file
+      # does not pin fails the release before a single binary is built.
+      - run: dotnet restore oracle/OoxmlValidator.csproj --locked-mode
+      - run: dotnet restore oracle.tests/OoxmlValidator.Tests.csproj --locked-mode
+
+      # A release must not ship an oracle whose own contract tests fail, and the
+      # diagnostic snapshot must match — a release is exactly the wrong moment to
+      # discover the baseline moved.
+      - run: dotnet test oracle.tests/OoxmlValidator.Tests.csproj
+      - run: git diff --exit-code -- fixtures/
+
+  # ---------------------------------------------------------------------------
+  # Five self-contained binaries.
+  # ---------------------------------------------------------------------------
+  binaries:
+    name: ${{ matrix.rid }}
+    needs: [resolve, pin]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: linux-x64
+            os: ubuntu-latest
+            r2r: true
+          - rid: linux-arm64
+            os: ubuntu-24.04-arm
+            r2r: true
+          - rid: osx-arm64
+            os: macos-latest
+            r2r: true
+          # Cross-compiled from the arm64 runner. ReadyToRun is off because it
+          # precompiles for the *target* architecture using the host's JIT, which
+          # cross-arch it cannot do. Plain self-contained is correct here; the only
+          # cost is a slower first start on Intel Macs.
+          - rid: osx-x64
+            os: macos-latest
+            r2r: false
+          - rid: win-x64
+            os: windows-latest
+            r2r: true
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.resolve.outputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: The tag and the package version must be the same claim
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          if [ "v${version}" != "${RELEASE_TAG}" ]; then
+            echo "::error::tag ${RELEASE_TAG} does not match package.json version ${version}"
+            echo "The npm version and the binary version are the same number by design."
+            echo "Fix package.json and re-tag rather than releasing the mismatch."
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_ENV"
+
+      # The publish properties live here, not in the csproj: PublishSingleFile and
+      # PublishTrimmed each make the SDK pin Microsoft.NET.ILLink.Tasks to the exact
+      # SDK patch, which lands in packages.lock.json and then breaks locked restore on
+      # every runner after a .NET update. SelfContained is not publish-only and would
+      # make ordinary builds RID-specific. See the comment in the csproj.
+      #
+      # Trimming stays off, at its default. The Open XML SDK reaches its generated
+      # schema types by reflection; a trimmer cannot see those references and removes
+      # them, and the result is not a crash — it is validation that silently stops
+      # checking part of the schema and calls everything clean.
+      - name: Publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet publish oracle/OoxmlValidator.csproj \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            -p:SelfContained=true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -p:PublishReadyToRun=${{ matrix.r2r }} \
+            -p:Version="${version}" \
+            -o out/${{ matrix.rid }}
+
+      # .tar.gz on every platform, Windows included: tar preserves the executable bit
+      # that zip loses, so there is no chmod anyone can forget, and Windows 10 1803+
+      # ships tar.exe — one archive format, one extraction path in the package.
+      #
+      # The binary sits at the archive root under its plain name, which is what
+      # resolution expects. The .pdb is left out: it is a debug artifact, and this is
+      # a ~40 MB download people make on first use.
+      - name: Archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          exe=ooxml-validator
+          [ "${{ matrix.rid }}" = "win-x64" ] && exe=ooxml-validator.exe
+          tar -czf "ooxml-validator-${{ matrix.rid }}.tar.gz" -C "out/${{ matrix.rid }}" "${exe}"
+          ls -lh "ooxml-validator-${{ matrix.rid }}.tar.gz"
+
+      # Only where the runner can execute what it just built. The cross-compiled
+      # osx-x64 archive cannot be smoke-tested on an arm64 runner, and pretending
+      # otherwise would mean either a broken step or a meaningless one.
+      - name: Smoke test
+        if: matrix.rid != 'osx-x64'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p smoke && tar -xzf "ooxml-validator-${{ matrix.rid }}.tar.gz" -C smoke
+          exe=smoke/ooxml-validator
+          [ "${{ matrix.rid }}" = "win-x64" ] && exe=smoke/ooxml-validator.exe
+
+          # Both halves matter: --version proves it starts and that -p:Version reached
+          # the binary, and validating a real package proves the schema data survived
+          # single-file packaging.
+          "${exe}" --version
+          reported=$("${exe}" --version | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).tool")
+          [ "${reported}" = "${version}" ] || {
+            echo "::error::binary reports ${reported}, expected ${version}"; exit 1; }
+          "${exe}" fixtures/clean.pptx > /dev/null
+          echo "ok"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ooxml-validator-${{ matrix.rid }}
+          path: ooxml-validator-${{ matrix.rid }}.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # The GitHub Release: archives, checksums, provenance.
+  # ---------------------------------------------------------------------------
+  github-release:
+    name: github release
+    needs: [resolve, binaries]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # Provenance attestations are signed with the workflow's OIDC identity.
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.resolve.outputs.tag }}
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: staging
+          pattern: ooxml-validator-*
+          merge-multiple: true
+
+      # Five, counted rather than assumed. `fail-fast: false` on the matrix means a
+      # single platform failing does not stop the others, which is what you want while
+      # debugging a build — and exactly how a release could otherwise go out missing a
+      # platform, with the package 404ing for whoever runs that architecture.
+      - name: Every platform must be present
+        run: |
+          set -euo pipefail
+          ls -lh staging/
+          found=$(ls staging/*.tar.gz | wc -l)
+          test "${found}" -eq 5 || {
+            echo "::error::expected 5 archives, found ${found}"; exit 1; }
+
+      # Written with bare filenames, not paths, because that is what the package looks
+      # for when it reads this file. Generated over every archive at once so the file
+      # cannot describe a subset of what the release actually serves.
+      - name: SHA256SUMS
+        working-directory: staging
+        run: |
+          set -euo pipefail
+          sha256sum *.tar.gz > SHA256SUMS
+          cat SHA256SUMS
+          sha256sum -c SHA256SUMS
+
+      # The checksums and the archives live in the same release, so whoever could
+      # rewrite one could rewrite the other: SHA256SUMS is integrity, not provenance.
+      # This is the check that survives a tampered release, and the package fails
+      # closed without it.
+      #
+      # Skipped on a rehearsal. An attestation is a permanent public record of a
+      # specific artifact; minting one for a build nobody will ever download is
+      # noise in a log whose value comes from everything in it being real.
+      - uses: actions/attest-build-provenance@v4
+        if: inputs.dry_run != true
+        with:
+          subject-path: staging/*.tar.gz
+
+      - name: Publish the release
+        # A rehearsal must not create a public release. Everything above it — the
+        # five builds, the smoke tests, the checksums — has already run, which is
+        # what a rehearsal is for.
+        if: inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+          PRERELEASE: ${{ needs.resolve.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          args=()
+          [ "${PRERELEASE}" = "true" ] && args+=(--prerelease)
+
+          if gh release view "${RELEASE_TAG}" > /dev/null 2>&1; then
+            # Re-running a release must replace its assets rather than fail, so a
+            # retried run is not a red X on a release that is otherwise fine.
+            gh release upload "${RELEASE_TAG}" staging/* --clobber
+          else
+            gh release create "${RELEASE_TAG}" staging/* \
+              --title "${RELEASE_TAG}" \
+              --generate-notes \
+              "${args[@]}"
+          fi
+
+  # ---------------------------------------------------------------------------
+  # npm.
+  # ---------------------------------------------------------------------------
+  npm:
+    name: npm publish
+    needs: [resolve, github-release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      # Trusted publishing: npm mints a short-lived token from this job's OIDC
+      # identity, which is why there is no npm secret in this repository.
+      id-token: write
+    environment:
+      name: npm-publish
+      url: https://www.npmjs.com/package/ooxml-validator
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.resolve.outputs.tag }}
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v6
+
+      # `registry-url` is required, not a restated default: it writes the .npmrc entry
+      # naming the registry this publish authenticates against, and without it npm
+      # never starts the OIDC exchange at all — it fails ENEEDAUTH having asked nobody.
+      #
+      # No dependency cache: a release should resolve from the lockfile rather than
+      # from whatever a previous run left behind.
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm >= 11.5.1. Pinned to the major that implements
+      # the exchange, not to `latest`, so a future npm cannot change how a release
+      # publishes without this line changing first.
+      - name: Use an npm that can exchange an OIDC token
+        run: npm install -g npm@11 && npm --version
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Stop if this version is already on the registry
+        id: existing
+        run: |
+          set -euo pipefail
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          # A version is immutable once published, so a re-run must be a no-op rather
+          # than a failure on a release that is in fact fine.
+          if npm view "${name}@${version}" version > /dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::${name}@${version} is already published"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish
+        # Including for a rehearsal: `npm publish --dry-run` is not local. It builds
+        # the tarball and then asks the registry, which refuses a version that already
+        # exists — so rehearsing a published version would fail a correct workflow.
+        if: steps.existing.outputs.published == 'false'
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          PRERELEASE: ${{ needs.resolve.outputs.prerelease }}
+          # setup-node's .npmrc points _authToken at this and defaults it to a literal
+          # placeholder. npm attempts the OIDC exchange either way, but on failure it
+          # falls back to whatever token it holds — and publishing with the placeholder
+          # gets a 404, which reads as "no such package" and hides the real cause.
+          # Emptied so a failed exchange fails as a failed exchange.
+          NODE_AUTH_TOKEN: ''
+        run: |
+          set -euo pipefail
+          args=""
+          [ "${PRERELEASE}" = "true" ] && args="--tag next"
+          [ "${DRY_RUN}" = "true" ] && args="${args} --dry-run"
+
+          # Verbose because this step's failure mode is opaque: npm reports a rejected
+          # identity as a 404, indistinguishable from a package that does not exist.
+          # The next step reads this log.
+          echo "npm publish ${args}"
+          npm publish ${args} --loglevel verbose 2>&1 | tee "${RUNNER_TEMP}/npm-publish.log"
+
+      # `npm publish --dry-run` demotes a rejected identity from an error to a warning
+      # and exits 0 — precisely backwards for a rehearsal, whose entire purpose is to
+      # catch that one failure. This is not hypothetical: the same mistake cost the
+      # sibling repo two version numbers before anyone read the log.
+      #
+      # Two halves, because "no error" is not evidence. The exchange must have been
+      # attempted — drop registry-url and npm asks nobody — and must not have been
+      # rejected.
+      - name: A rehearsal must fail on a rejected identity
+        if: steps.existing.outputs.published == 'false' && inputs.dry_run == true
+        run: |
+          set -euo pipefail
+          log="${RUNNER_TEMP}/npm-publish.log"
+
+          if ! grep -q 'oidc/token/exchange' "${log}"; then
+            echo "::error::npm never attempted the OIDC token exchange"
+            echo "The registry was never asked who this job is, so the rehearsal proved"
+            echo "nothing. Check that setup-node still sets registry-url."
+            exit 1
+          fi
+
+          if grep -qE 'Failed token exchange|This command requires you to be logged in' "${log}"; then
+            echo "::error::npm's OIDC token exchange was rejected"
+            echo "A real publish from this tag would fail. npm reports a rejected identity"
+            echo "as a 404, so read the trusted publisher on npmjs.com — its repository,"
+            echo "workflow filename (release.yml) and environment (npm-publish) must match."
+            exit 1
+          fi
+          echo "OIDC token exchange succeeded — this tag would publish for real"
+
+      - name: Confirm the registry serves it
+        if: steps.existing.outputs.published == 'false' && inputs.dry_run != true
+        env:
+          VERSION: ${{ steps.existing.outputs.version }}
+        run: |
+          set -euo pipefail
+          name=$(node -p "require('./package.json').name")
+          for attempt in 1 2 3 4 5; do
+            if npm view "${name}@${VERSION}" version > /dev/null 2>&1; then
+              echo "${name}@${VERSION} is live"
+              npm view "${name}@${VERSION}" dist.attestations \
+                || echo "::warning::no provenance attestation recorded"
+              exit 0
+            fi
+            echo "not visible yet (attempt ${attempt}); the registry is eventually consistent"
+            sleep 10
+          done
+          echo "::error::${name}@${VERSION} did not become visible"
+          exit 1

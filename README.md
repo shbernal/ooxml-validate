@@ -26,9 +26,9 @@ pnpm add -D ooxml-validator
 ```
 
 Nothing is downloaded at install time. The first call that actually needs the
-validator fetches a ~110 MB self-contained binary into
-`~/.cache/ooxml-validator/<version>/`, verifies its checksum and its GitHub build
-provenance attestation, and reuses it from then on. Reinstalls and multiple
+validator fetches a self-contained binary (~42 MB compressed, ~110 MB on disk)
+into `~/.cache/ooxml-validator/<version>/`, verifies its checksum and its GitHub
+build provenance attestation, and reuses it from then on. Reinstalls and multiple
 checkouts share one cache entry.
 
 Supported platforms: `linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`,

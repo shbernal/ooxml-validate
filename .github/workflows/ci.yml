@@ -31,8 +31,16 @@ permissions:
 
 jobs:
   node:
-    name: node
-    runs-on: ubuntu-latest
+    name: node (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # All three, because binary resolution is the most platform-fragile code in
+        # the package: path handling, the Windows `.exe` suffix, and the cache
+        # location all differ, and the Windows failure mode in particular is silent —
+        # an extensionless path never resolves there and validation turns itself off.
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v6
@@ -43,7 +51,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run verify
       - run: pnpm run build
+
       - run: pnpm run docs:check
+        if: matrix.os == 'ubuntu-latest'
 
   oracle:
     name: oracle
