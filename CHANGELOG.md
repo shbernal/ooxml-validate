@@ -11,6 +11,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.0.2] — 2026-08-15
+
+No functional change; the code is identical to 0.0.1.
+
+It exists to exercise the automated release path end to end, which 0.0.1 could
+not: npm's trusted publishing needs the package to already exist on the registry
+before a publisher can be configured for it, so the first publish had to be a
+manual one. This is the first release cut entirely by the workflow — binaries,
+checksums, provenance and the npm publish.
+
 ## [0.0.1] — 2026-08-15
 
 First release. Deliberately a small version number: the contract is not frozen,

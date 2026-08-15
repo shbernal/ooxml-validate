@@ -1,6 +1,6 @@
 {
   "name": "ooxml-validate",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Validate OOXML documents (pptx, xlsx, docx) against the Open XML SDK schema validator, from Node.",
   "license": "MIT",
   "author": "shbernal",
