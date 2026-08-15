@@ -27,6 +27,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "ooxml-validator": "./dist/cli.js"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -47,6 +50,7 @@
     "oracle:build": "dotnet build oracle/OoxmlValidator.csproj -c Release",
     "oracle:test": "dotnet test oracle.tests/OoxmlValidator.Tests.csproj",
     "oracle:snapshot": "OOXML_VALIDATOR_UPDATE_SNAPSHOT=1 dotnet test oracle.tests/OoxmlValidator.Tests.csproj",
+    "test:integration": "pnpm run oracle:build && OOXML_VALIDATOR_BIN=\"$PWD/oracle/bin/Release/net10.0/ooxml-validator\" pnpm test",
     "verify": "pnpm run lint && pnpm run typecheck && pnpm run test",
     "prepack": "pnpm run build",
     "docs:list": "python3 scripts/docs-list.py",

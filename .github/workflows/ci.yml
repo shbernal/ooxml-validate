@@ -2,10 +2,18 @@
 # re-listing the individual checks here would be a second definition of
 # "everything" to keep in sync, and this is the copy that would drift.
 #
-# Two jobs, split along the SDK boundary. The `node` job installs no .NET at all,
-# on purpose: the TypeScript half must be buildable and testable without an SDK,
-# because that is the promise made to consumers, and this is where the claim gets
-# tested rather than assumed.
+# Three jobs.
+#
+# `node` installs no .NET at all, on purpose: the TypeScript half must be buildable
+# and testable without an SDK, because that is the promise made to consumers, and
+# this is where the claim gets tested rather than assumed. The oracle-dependent
+# tests skip there, which is correct — there is genuinely no oracle.
+#
+# `oracle` is the .NET half: locked restore, xunit, and the diagnostic snapshot.
+#
+# `integration` has both and runs the two halves against each other. It exists so
+# the skips in `node` are never the only outcome anywhere: every test in the suite
+# actually runs in exactly one of these jobs.
 name: CI
 
 on:
@@ -61,3 +69,28 @@ jobs:
       # *other* failure mode loud: a run that rewrote the snapshot and left the
       # working tree dirty, which would otherwise pass silently.
       - run: git diff --exit-code -- fixtures/
+
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run oracle:build
+
+      # Pointed at the source build rather than a downloaded release: this job tests
+      # the package against the oracle *in this commit*, which is the pairing a
+      # release will ship. The download path is covered separately — it needs a
+      # published release to download.
+      - run: pnpm test
+        env:
+          OOXML_VALIDATOR_BIN: ${{ github.workspace }}/oracle/bin/Release/net10.0/ooxml-validator

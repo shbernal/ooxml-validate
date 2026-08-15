@@ -41,10 +41,33 @@ As a library:
 | Export | What it does |
 |---|---|
 | `validate(paths, opts?)` | Validate files on disk. |
-| `validateBuffer(buf, {ext, format})` | Validate an in-memory package. |
-| `validateBuffers(bufs, opts?)` | Batch form of the above. |
-| `validatorAvailable()` | Whether the binary can be resolved. |
+| `validateBuffer(bytes, {ext, label?, format?})` | Validate an in-memory package. |
+| `validateBuffers(inputs, opts?)` | Batch form of the above. |
+| `validatorAvailable()` | Whether the binary can be resolved. Throws under `CI`. |
+| `probeFormats(paths)` | Error counts at every conformance target. |
+| `oracleVersion()` | The oracle's version and the Open XML SDK it links. |
 | `FILE_FORMATS` / `FILE_FORMAT` | Conformance targets, and the pinned default. |
+
+Validating in-memory packages needs no temp-file bookkeeping from you:
+
+```js
+const results = await validateBuffers([
+  {bytes: deck, ext: 'pptx', label: 'quarterly-review'},
+  {bytes: book, ext: 'xlsx', label: 'figures'},
+]);
+// results[].file is 'quarterly-review' / 'figures', never a temp path.
+```
+
+The bytes go to temp files (the oracle only reads files), and the temp path is
+mapped back to your `label` before you see it. Correlation is by that map alone,
+never by array position — so results stay attributable however the oracle orders
+them. Temp files are cleaned up even if a batch crashes.
+
+Calls made while an invocation is in flight are coalesced into the next batch,
+which holds the process to **one validator child at a time** regardless of how
+many callers there are. That matters: the binary costs ~0.3 s of startup and
+~55 MB of RSS, and one child per call multiplies both by your test runner's
+concurrency.
 
 As a CLI:
 
@@ -134,7 +157,16 @@ older Office version sees a document.
 |---|---|
 | `OOXML_VALIDATOR_BIN` | Use this binary instead of resolving one. For bisecting against another build. |
 | `OOXML_VALIDATOR_NO_BATCH` | Disable batching, so a failure pins to one input. |
-| `CI` | Makes a missing binary a hard error instead of a one-line notice. |
+| `OOXML_VALIDATOR_CACHE_DIR` | Override where downloaded binaries are cached. |
+| `OOXML_VALIDATOR_NO_DOWNLOAD` | Never fetch; fail if the binary is not already cached. |
+| `OOXML_VALIDATOR_FROM_SOURCE` | Build the oracle from source. Needs a .NET SDK and a checkout of this repo. |
+| `OOXML_VALIDATOR_SKIP_ATTESTATION` | Accept the checksum alone when provenance cannot be verified. |
+| `CI` | Makes an unobtainable binary a hard error instead of a one-line notice. |
+
+`validatorAvailable()` is the gate to build `skipIf` on. Under `CI` an
+unobtainable binary throws, because a silently-skipped schema suite is green
+while proving nothing and obtaining the binary is part of the job. Locally it
+writes one notice to stderr and returns `false`.
 
 ## Versioning
 
