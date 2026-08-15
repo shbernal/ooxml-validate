@@ -11,6 +11,17 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.0.3] — 2026-08-15
+
+### Fixed
+
+- A bare `--` now ends the options rather than failing with `Unknown option: --`.
+  Everything after it is treated as a path, even if it is spelled like a flag.
+  Package managers forward the separator when the CLI is run through a script, so
+  `pnpm run validate:ooxml -- book.xlsx` — the habitual spelling — used to be the
+  one that did not work. The alternative was a wrapper script in every consumer
+  repo to shift it off, which is the divergence this package exists to remove.
+
 ## [0.0.2] — 2026-08-15
 
 No functional change; the code is identical to 0.0.1.
