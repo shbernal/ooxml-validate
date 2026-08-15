@@ -104,3 +104,97 @@ jobs:
       - run: pnpm test
         env:
           OOXML_VALIDATOR_BIN: ${{ github.workspace }}/oracle/bin/Release/net10.0/ooxml-validator
+
+  # The one path a source build can never exercise: resolving, downloading,
+  # checksumming, attesting and extracting a real published binary. It is also the
+  # most platform-fragile code in the package — the Windows `.exe` suffix and macOS's
+  # quarantine and ad-hoc signing are each a silent failure on exactly one OS — so it
+  # runs on all three.
+  released:
+    name: released binary (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # The package resolves the release tagged with its own version, deliberately —
+      # one number, no resolution matrix. So between the commit that bumps the version
+      # and the tag that releases it, there is genuinely nothing to download.
+      #
+      # That window is real, bounded, and self-clearing, which is why it is reported
+      # rather than treated as a failure. It is NOT the same as "the binary could not
+      # be obtained", which stays fatal below: this checks that the release is absent
+      # for the one reason that is legitimate, and having established that, expects
+      # everything afterwards to work.
+      - name: Is there a release for this version yet?
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="v$(node -p "require('./package.json').version")"
+          if gh release view "${tag}" --json tagName > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::no release ${tag} yet — tag it to exercise the download path"
+          fi
+
+      - name: Resolve, verify and run a real released binary
+        if: steps.release.outputs.exists == 'true'
+        shell: bash
+        env:
+          # `gh attestation verify` queries GitHub's attestation API, which needs a
+          # token. Provenance verification fails closed, so without this the step
+          # would fail — which is the correct direction, but for the wrong reason.
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node --input-type=module -e '
+            import {resolveValidator} from "./src/resolve.ts";
+            import {validate} from "./src/validate.ts";
+            import {oracleVersion} from "./src/run.ts";
+            import {PACKAGE_VERSION} from "./src/version.ts";
+
+            const binary = await resolveValidator();
+            console.log("resolved:", binary);
+
+            // One number: the binary a given package version resolves must be the
+            // binary built for that version. A mismatch here means the release and
+            // the package disagree about what they are.
+            const {tool} = await oracleVersion();
+            if (tool !== PACKAGE_VERSION) {
+              throw new Error(`binary reports ${tool}, package is ${PACKAGE_VERSION}`);
+            }
+
+            const report = await validate(["fixtures/clean.pptx", "fixtures/dirty.pptx"]);
+            const byFile = new Map(report.results.map((r) => [r.file, r]));
+            if (!byFile.get("fixtures/clean.pptx").valid) throw new Error("clean fixture reported invalid");
+            if (byFile.get("fixtures/dirty.pptx").valid) throw new Error("dirty fixture reported valid");
+            console.log("released binary validates correctly at", report.format, report.sdkVersion);
+          '
+
+      # Second run, same job: the cache must now satisfy resolution with the network
+      # forbidden. A download on every call would be a ~40 MB fetch per test run and
+      # nobody would notice until CI got slow.
+      - name: The second resolution must not touch the network
+        if: steps.release.outputs.exists == 'true'
+        shell: bash
+        env:
+          OOXML_VALIDATOR_NO_DOWNLOAD: '1'
+        run: |
+          set -euo pipefail
+          node --input-type=module -e '
+            import {resolveValidator} from "./src/resolve.ts";
+            console.log("cached:", await resolveValidator());
+          '

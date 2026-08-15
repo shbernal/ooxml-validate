@@ -182,7 +182,7 @@ export async function downloadBinary(options: DownloadOptions): Promise<string> 
 
   const staging = await mkdtemp(join(tmpdir(), 'ooxml-validator-dl-'));
   try {
-    onProgress(`fetching ${asset} ${tag} (~110 MB, once per version)`);
+    onProgress(`fetching ${asset} ${tag} (~40 MB, once per version)`);
 
     const [archiveResponse, sumsResponse] = await Promise.all([
       fetchOrThrow(`${RELEASE_BASE}/${tag}/${asset}`),
