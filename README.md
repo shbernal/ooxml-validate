@@ -1,10 +1,10 @@
-# ooxml-validator
+# ooxml-validate
 
 Validate OOXML documents — `.pptx`, `.xlsx`, `.docx` and friends — against
 Microsoft's [Open XML SDK][sdk] schema validator, from Node.
 
 ```js
-import {validate, validateBuffer} from 'ooxml-validator';
+import {validate, validateBuffer} from 'ooxml-validate';
 
 const report = await validate(['deck.pptx', 'book.xlsx']);
 for (const result of report.results) {
@@ -16,18 +16,18 @@ The schema validator itself is .NET. This package ships a small self-contained
 CLI around it and downloads the right prebuilt binary for your platform on first
 use, so **consumers do not need a .NET SDK installed**.
 
-- **Package**: `ooxml-validator` on npm (unscoped).
+- **Package**: `ooxml-validate` on npm (unscoped).
 - **Repo**: `shbernal/ooxml-validate`. The name mismatch is deliberate.
 
 ## Install
 
 ```sh
-pnpm add -D ooxml-validator
+pnpm add -D ooxml-validate
 ```
 
 Nothing is downloaded at install time. The first call that actually needs the
 validator fetches a self-contained binary (~42 MB compressed, ~110 MB on disk)
-into `~/.cache/ooxml-validator/<version>/`, verifies its checksum and its GitHub
+into `~/.cache/ooxml-validate/<version>/`, verifies its checksum and its GitHub
 build provenance attestation, and reuses it from then on. Reinstalls and multiple
 checkouts share one cache entry.
 
@@ -72,7 +72,7 @@ concurrency.
 As a CLI:
 
 ```sh
-pnpm exec ooxml-validator deck.pptx
+pnpm exec ooxml-validate deck.pptx
 ```
 
 Exit codes are meaningful and are part of the contract:
@@ -155,12 +155,12 @@ older Office version sees a document.
 
 | Variable | Effect |
 |---|---|
-| `OOXML_VALIDATOR_BIN` | Use this binary instead of resolving one. For bisecting against another build. |
-| `OOXML_VALIDATOR_NO_BATCH` | Disable batching, so a failure pins to one input. |
-| `OOXML_VALIDATOR_CACHE_DIR` | Override where downloaded binaries are cached. |
-| `OOXML_VALIDATOR_NO_DOWNLOAD` | Never fetch; fail if the binary is not already cached. |
-| `OOXML_VALIDATOR_FROM_SOURCE` | Build the oracle from source. Needs a .NET SDK and a checkout of this repo. |
-| `OOXML_VALIDATOR_SKIP_ATTESTATION` | Accept the checksum alone when provenance cannot be verified. |
+| `OOXML_VALIDATE_BIN` | Use this binary instead of resolving one. For bisecting against another build. |
+| `OOXML_VALIDATE_NO_BATCH` | Disable batching, so a failure pins to one input. |
+| `OOXML_VALIDATE_CACHE_DIR` | Override where downloaded binaries are cached. |
+| `OOXML_VALIDATE_NO_DOWNLOAD` | Never fetch; fail if the binary is not already cached. |
+| `OOXML_VALIDATE_FROM_SOURCE` | Build the oracle from source. Needs a .NET SDK and a checkout of this repo. |
+| `OOXML_VALIDATE_SKIP_ATTESTATION` | Accept the checksum alone when provenance cannot be verified. |
 | `CI` | Makes an unobtainable binary a hard error instead of a one-line notice. |
 
 `validatorAvailable()` is the gate to build `skipIf` on. Under `CI` an

@@ -23,7 +23,7 @@ import type {FileFormat, ValidationReport, ValidationResult} from './types.ts';
  * Bypass the queue and validate one file per process. For pinning a batch failure to a
  * single input by hand.
  */
-const NO_BATCH = 'OOXML_VALIDATOR_NO_BATCH';
+const NO_BATCH = 'OOXML_VALIDATE_NO_BATCH';
 
 /**
  * Caps stdout size and the length of one file list, not memory — the oracle's RSS does
@@ -107,7 +107,7 @@ async function runBatch(batch: readonly QueueItem[], format: FileFormat): Promis
           const single = await runOracle([item.path], format);
           const result = single.results[0];
           if (!result) {
-            item.reject(new Error(`ooxml-validator: no result for ${item.path}.`));
+            item.reject(new Error(`ooxml-validate: no result for ${item.path}.`));
             return;
           }
           item.resolve({result, sdkVersion: single.sdkVersion, format: single.format});
@@ -132,7 +132,7 @@ async function runBatch(batch: readonly QueueItem[], format: FileFormat): Promis
     } else {
       item.reject(
         new Error(
-          `ooxml-validator: the oracle returned no result for ${item.path}. ` +
+          `ooxml-validate: the oracle returned no result for ${item.path}. ` +
             'Every input file must appear in the report; this is a bug in the oracle ' +
             'or in this package, not a clean file.',
         ),
@@ -149,7 +149,7 @@ export function enqueue(path: string, format: FileFormat = FILE_FORMAT): Promise
   if (process.env[NO_BATCH]) {
     return runOracle([path], format).then((report) => {
       const result = report.results[0];
-      if (!result) throw new Error(`ooxml-validator: no result for ${path}.`);
+      if (!result) throw new Error(`ooxml-validate: no result for ${path}.`);
       return {result, sdkVersion: report.sdkVersion, format: report.format};
     });
   }

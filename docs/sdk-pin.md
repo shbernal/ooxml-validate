@@ -15,9 +15,9 @@ doc_type: "reference"
 
 | | Value | Where |
 |---|---|---|
-| .NET target | `net10.0` | `oracle/OoxmlValidator.csproj` |
+| .NET target | `net10.0` | `oracle/OoxmlValidate.csproj` |
 | SDK toolchain | `10.0.100` | `global.json` |
-| `DocumentFormat.OpenXml` | see the csproj | `oracle/OoxmlValidator.csproj` |
+| `DocumentFormat.OpenXml` | see the csproj | `oracle/OoxmlValidate.csproj` |
 | Transitive closure | locked | `oracle/packages.lock.json` + `RestoreLockedMode` |
 
 `RestoreLockedMode` is not optional. Without it the lock file is a suggestion,
@@ -40,7 +40,7 @@ The corpus and the snapshot in `fixtures/` exist for exactly this. They make the
 effect of a bump visible in the bump's own diff instead of surfacing weeks later
 as a mystery failure in a consumer repo.
 
-1. Bump the version in `oracle/OoxmlValidator.csproj`.
+1. Bump the version in `oracle/OoxmlValidate.csproj`.
 2. Regenerate `oracle/packages.lock.json`.
 3. Regenerate the diagnostic snapshot over `fixtures/`.
 4. **Read the snapshot delta.** Every changed diagnostic needs a verdict: a real

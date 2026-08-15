@@ -13,11 +13,11 @@ test('the Windows executable carries its .exe suffix', () => {
   // A bare extensionless path never resolves on Windows, and the failure is silent:
   // resolution reports the binary as missing and validation turns itself off. This
   // assertion exists because that bug is invisible to anyone developing on Linux.
-  assert.equal(executableName('win-x64'), 'ooxml-validator.exe');
+  assert.equal(executableName('win-x64'), 'ooxml-validate.exe');
 
   for (const platform of SUPPORTED_PLATFORMS) {
     if (platform === 'win-x64') continue;
-    assert.equal(executableName(platform), 'ooxml-validator');
+    assert.equal(executableName(platform), 'ooxml-validate');
   }
 });
 
@@ -42,12 +42,12 @@ test('the cache is keyed by version and platform, outside the package', () => {
 });
 
 test('the cache directory honours an explicit override', () => {
-  const original = process.env.OOXML_VALIDATOR_CACHE_DIR;
+  const original = process.env.OOXML_VALIDATE_CACHE_DIR;
   try {
-    process.env.OOXML_VALIDATOR_CACHE_DIR = '/tmp/somewhere-else';
+    process.env.OOXML_VALIDATE_CACHE_DIR = '/tmp/somewhere-else';
     assert.equal(cacheRoot(), '/tmp/somewhere-else');
   } finally {
-    if (original === undefined) delete process.env.OOXML_VALIDATOR_CACHE_DIR;
-    else process.env.OOXML_VALIDATOR_CACHE_DIR = original;
+    if (original === undefined) delete process.env.OOXML_VALIDATE_CACHE_DIR;
+    else process.env.OOXML_VALIDATE_CACHE_DIR = original;
   }
 });

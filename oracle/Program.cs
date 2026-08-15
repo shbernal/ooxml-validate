@@ -5,7 +5,7 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Validation;
 
-namespace OoxmlValidator;
+namespace OoxmlValidate;
 
 /// <summary>
 /// Validates OOXML packages against the Open XML SDK's schema validator and reports
@@ -43,8 +43,8 @@ internal static class Program
     private const int MaxErrorsPerFile = 1_000;
 
     private const string Usage =
-        "Usage: ooxml-validator [--format <FileFormatVersions>] [--files-from <path|->] [<file> ...]\n" +
-        "       ooxml-validator --version";
+        "Usage: ooxml-validate [--format <FileFormatVersions>] [--files-from <path|->] [<file> ...]\n" +
+        "       ooxml-validate --version";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

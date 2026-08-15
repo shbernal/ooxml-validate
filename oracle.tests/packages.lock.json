@@ -114,7 +114,7 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
-      "ooxml-validator": {
+      "ooxml-validate": {
         "type": "Project",
         "dependencies": {
           "DocumentFormat.OpenXml": "[3.5.1, )"

@@ -1,5 +1,5 @@
 using System.Reflection;
-using OoxmlValidator;
+using OoxmlValidate;
 
 // Every test in this assembly drives Program.Main in-process, which means redirecting
 // Console.Out / Console.Error / Console.In — process-global state. Two tests doing that
@@ -8,7 +8,7 @@ using OoxmlValidator;
 // it would also make them slow enough that people stop running them.
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
-namespace OoxmlValidator.Tests;
+namespace OoxmlValidate.Tests;
 
 internal sealed record CliResult(int ExitCode, string Stdout, string Stderr);
 
@@ -110,7 +110,7 @@ internal sealed class TempDirectory : IDisposable
     {
         Path = System.IO.Path.Combine(
             System.IO.Path.GetTempPath(),
-            "ooxml-validator-tests",
+            "ooxml-validate-tests",
             Guid.NewGuid().ToString("n"));
         System.IO.Directory.CreateDirectory(Path);
     }

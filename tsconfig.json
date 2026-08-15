@@ -27,7 +27,7 @@
     "noEmit": true,
 
     "incremental": true,
-    "tsBuildInfoFile": "node_modules/.cache/ooxml-validator/src.tsbuildinfo"
+    "tsBuildInfoFile": "node_modules/.cache/ooxml-validate/src.tsbuildinfo"
   },
   "//erasableSyntaxOnly": "The dev/test workflow runs these .ts files through Node's type-stripping, which refuses syntax that is not erasable — an enum, a namespace, a parameter property. Without this flag tsc accepts all three and the failure surfaces later as a parse error from `node --test`, pointing at the syntax rather than at the choice.",
   "//tsBuildInfoFile": "Every config that extends this one MUST name its own: an inherited relative path resolves against THIS directory, so two projects would otherwise share one buildinfo and each would invalidate the other's.",

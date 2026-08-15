@@ -31,7 +31,7 @@ export function requirePlatform(): PlatformId {
   if (platform) return platform;
 
   throw new Error(
-    `ooxml-validator: no prebuilt binary for ${process.platform}-${process.arch}. ` +
+    `ooxml-validate: no prebuilt binary for ${process.platform}-${process.arch}. ` +
       `Supported: ${SUPPORTED_PLATFORMS.join(', ')}. ` +
       'With a .NET SDK installed you can build from source instead — see the README.',
   );
@@ -46,7 +46,7 @@ export function requirePlatform(): PlatformId {
  * than a constant that someone reads once on Linux and assumes is universal.
  */
 export function executableName(platform: PlatformId = requirePlatform()): string {
-  return platform === 'win-x64' ? 'ooxml-validator.exe' : 'ooxml-validator';
+  return platform === 'win-x64' ? 'ooxml-validate.exe' : 'ooxml-validate';
 }
 
 /**
@@ -58,7 +58,7 @@ export function executableName(platform: PlatformId = requirePlatform()): string
  * covers all five targets with no dependency and no branch.
  */
 export function assetName(platform: PlatformId = requirePlatform()): string {
-  return `ooxml-validator-${platform}.tar.gz`;
+  return `ooxml-validate-${platform}.tar.gz`;
 }
 
 /**
@@ -66,18 +66,18 @@ export function assetName(platform: PlatformId = requirePlatform()): string {
  * and multiple checkouts share one ~110 MB download instead of each paying for it.
  */
 export function cacheRoot(): string {
-  const override = process.env.OOXML_VALIDATOR_CACHE_DIR;
+  const override = process.env.OOXML_VALIDATE_CACHE_DIR;
   if (override) return override;
 
   if (process.platform === 'win32') {
     const local = process.env.LOCALAPPDATA;
-    if (local) return join(local, 'ooxml-validator', 'Cache');
-    return join(tmpdir(), 'ooxml-validator-cache');
+    if (local) return join(local, 'ooxml-validate', 'Cache');
+    return join(tmpdir(), 'ooxml-validate-cache');
   }
 
   const xdg = process.env.XDG_CACHE_HOME;
-  if (xdg) return join(xdg, 'ooxml-validator');
-  return join(homedir(), '.cache', 'ooxml-validator');
+  if (xdg) return join(xdg, 'ooxml-validate');
+  return join(homedir(), '.cache', 'ooxml-validate');
 }
 
 /** Cache location for one version on one platform. */

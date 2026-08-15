@@ -1,7 +1,7 @@
 ---
 doc-schema-version: 1
 title: "Architecture"
-summary: "How ooxml-validator is structured and where major responsibilities live."
+summary: "How ooxml-validate is structured and where major responsibilities live."
 read_when:
   - Changing module boundaries
   - Explaining architecture or ownership decisions
@@ -81,8 +81,8 @@ caller ──▶ validate() / validateBuffer(s)()
 ## Extension Points
 
 - `FILE_FORMATS` — validate against a different conformance target.
-- `OOXML_VALIDATOR_BIN` — point at another build, for bisecting.
-- `OOXML_VALIDATOR_NO_BATCH` — pin a failure to a single input.
+- `OOXML_VALIDATE_BIN` — point at another build, for bisecting.
+- `OOXML_VALIDATE_NO_BATCH` — pin a failure to a single input.
 
 ## Deliberately Not Here
 

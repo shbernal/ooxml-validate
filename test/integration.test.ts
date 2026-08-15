@@ -1,6 +1,6 @@
 // End-to-end against a real oracle binary.
 //
-// Skipped unless OOXML_VALIDATOR_BIN points at one, because the `node` CI job
+// Skipped unless OOXML_VALIDATE_BIN points at one, because the `node` CI job
 // deliberately installs no .NET SDK — that job exists to prove the TypeScript half
 // needs none. The `integration` job has both and sets the variable, so these are never
 // silently skipped where they ought to run.
@@ -25,12 +25,12 @@ const FIXTURES = join(REPO_ROOT, 'fixtures');
 const fixture = (name: string): string => join(FIXTURES, name);
 const bytes = (name: string): Uint8Array => new Uint8Array(readFileSync(fixture(name)));
 
-const ORACLE = process.env.OOXML_VALIDATOR_BIN;
-const skip = ORACLE ? false : 'set OOXML_VALIDATOR_BIN (pnpm run oracle:build) to run these';
+const ORACLE = process.env.OOXML_VALIDATE_BIN;
+const skip = ORACLE ? false : 'set OOXML_VALIDATE_BIN (pnpm run oracle:build) to run these';
 
 /** Temp directories this package creates while validating buffers. */
 function strayTempDirs(): string[] {
-  return readdirSync(tmpdir()).filter((entry) => entry.startsWith('ooxml-validator-'));
+  return readdirSync(tmpdir()).filter((entry) => entry.startsWith('ooxml-validate-'));
 }
 
 describe('validate', {skip}, () => {

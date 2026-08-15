@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// The `ooxml-validator` command.
+// The `ooxml-validate` command.
 //
 // A pass-through to the resolved oracle: same arguments, same stdout, same stderr,
 // same exit code. Nothing is reinterpreted on the way through, so `pnpm exec
-// ooxml-validator deck.pptx` in a consumer repo and the oracle run by CI are the same
+// ooxml-validate deck.pptx` in a consumer repo and the oracle run by CI are the same
 // program answering the same question — which is the point of having one oracle.
 //
 // The only thing this layer adds is resolution: finding (and, once, downloading) the
@@ -35,7 +35,7 @@ async function main(): Promise<void> {
   });
 
   child.on('error', (error: Error) => {
-    process.stderr.write(`ooxml-validator: could not run ${binary}: ${error.message}\n`);
+    process.stderr.write(`ooxml-validate: could not run ${binary}: ${error.message}\n`);
     process.exitCode = TOOL_FAILURE;
   });
 

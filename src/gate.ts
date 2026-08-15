@@ -27,7 +27,7 @@ export async function validatorAvailable(): Promise<boolean> {
 
     if (process.env.CI) {
       throw new Error(
-        `ooxml-validator: the validator could not be obtained, and schema assertions ` +
+        `ooxml-validate: the validator could not be obtained, and schema assertions ` +
           `must not be skipped in CI.\n${detail}`,
         {cause: error},
       );
@@ -39,9 +39,9 @@ export async function validatorAvailable(): Promise<boolean> {
       // runner is still collecting the module graph, and runners drop console output
       // emitted outside a running test — a notice nobody sees defeats the point.
       process.stderr.write(
-        '\n[ooxml-validator] the validator is unavailable — schema assertions are being SKIPPED.\n' +
-          '[ooxml-validator] A green run here does NOT prove schema validity.\n' +
-          `[ooxml-validator] ${detail.split('\n')[0]}\n\n`,
+        '\n[ooxml-validate] the validator is unavailable — schema assertions are being SKIPPED.\n' +
+          '[ooxml-validate] A green run here does NOT prove schema validity.\n' +
+          `[ooxml-validate] ${detail.split('\n')[0]}\n\n`,
       );
     }
     return false;

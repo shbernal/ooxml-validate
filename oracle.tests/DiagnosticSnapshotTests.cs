@@ -1,4 +1,4 @@
-namespace OoxmlValidator.Tests;
+namespace OoxmlValidate.Tests;
 
 /// <summary>
 /// The SDK-bump guardrail.
@@ -17,7 +17,7 @@ namespace OoxmlValidator.Tests;
 ///
 /// To re-record after a deliberate change:
 ///
-///     OOXML_VALIDATOR_UPDATE_SNAPSHOT=1 dotnet test oracle.tests/OoxmlValidator.Tests.csproj
+///     OOXML_VALIDATE_UPDATE_SNAPSHOT=1 dotnet test oracle.tests/OoxmlValidate.Tests.csproj
 ///
 /// then read the diff before committing it. Re-recording without reading it is the same
 /// as not having this test.
@@ -25,7 +25,7 @@ namespace OoxmlValidator.Tests;
 public sealed class DiagnosticSnapshotTests
 {
     private const string SnapshotName = "diagnostics.snapshot.json";
-    private const string UpdateVariable = "OOXML_VALIDATOR_UPDATE_SNAPSHOT";
+    private const string UpdateVariable = "OOXML_VALIDATE_UPDATE_SNAPSHOT";
 
     /// <summary>
     /// The corpus, named explicitly rather than globbed. A glob would quietly shrink the
@@ -48,7 +48,7 @@ public sealed class DiagnosticSnapshotTests
     {
         // Run from inside fixtures/ with bare filenames, so the report echoes bare
         // filenames and the snapshot is identical on every machine. This is also exactly
-        // what `ooxml-validator *` prints from that directory, so a human can reproduce
+        // what `ooxml-validate *` prints from that directory, so a human can reproduce
         // the snapshot by hand without knowing anything about this test.
         var result = Cli.RunIn(Fixtures.Directory, Corpus);
 
@@ -77,7 +77,7 @@ public sealed class DiagnosticSnapshotTests
                 + "If this is an Open XML SDK bump, that is what this test is for: every changed "
                 + "diagnostic needs a verdict — a real defect in a consumer's writer, or a "
                 + "stricter/changed rule — recorded in the PR. See docs/sdk-pin.md.\n\n"
-                + $"Re-record with: {UpdateVariable}=1 dotnet test oracle.tests/OoxmlValidator.Tests.csproj");
+                + $"Re-record with: {UpdateVariable}=1 dotnet test oracle.tests/OoxmlValidate.Tests.csproj");
     }
 
     [Fact]

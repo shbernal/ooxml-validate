@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace OoxmlValidator.Tests;
+namespace OoxmlValidate.Tests;
 
 /// <summary>
 /// The CLI's observable contract: exit codes, which stream carries what, path echo,

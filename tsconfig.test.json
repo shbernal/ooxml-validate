@@ -3,7 +3,7 @@
   "extends": "./tsconfig.json",
   "//tsBuildInfoFile": "Its own file, never the inherited one — see the note in tsconfig.json.",
   "compilerOptions": {
-    "tsBuildInfoFile": "node_modules/.cache/ooxml-validator/harness.tsbuildinfo"
+    "tsBuildInfoFile": "node_modules/.cache/ooxml-validate/harness.tsbuildinfo"
   },
   "include": ["test/**/*.ts", "scripts/**/*.ts"]
 }

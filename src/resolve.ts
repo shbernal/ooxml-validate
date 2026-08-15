@@ -25,13 +25,13 @@ import {PACKAGE_VERSION} from './version.ts';
 const execFile = promisify(execFileCallback);
 
 /** Point at another build, for bisecting a suspected oracle regression. */
-const BIN_OVERRIDE = 'OOXML_VALIDATOR_BIN';
+const BIN_OVERRIDE = 'OOXML_VALIDATE_BIN';
 
 /** Opt in to building the oracle from source. Requires a .NET SDK and a checkout. */
-const FROM_SOURCE = 'OOXML_VALIDATOR_FROM_SOURCE';
+const FROM_SOURCE = 'OOXML_VALIDATE_FROM_SOURCE';
 
 /** Turn the lazy download off, for environments that must never reach the network. */
-const NO_DOWNLOAD = 'OOXML_VALIDATOR_NO_DOWNLOAD';
+const NO_DOWNLOAD = 'OOXML_VALIDATE_NO_DOWNLOAD';
 
 async function isExecutable(path: string): Promise<boolean> {
   try {
@@ -60,7 +60,7 @@ function packageRoot(): string {
  * depended on whether the machine happened to have a .NET SDK.
  */
 async function buildFromSource(): Promise<string | null> {
-  const project = join(packageRoot(), 'oracle', 'OoxmlValidator.csproj');
+  const project = join(packageRoot(), 'oracle', 'OoxmlValidate.csproj');
   try {
     await access(project);
   } catch {
@@ -71,12 +71,12 @@ async function buildFromSource(): Promise<string | null> {
 
   if (await isExecutable(output)) return output;
 
-  process.stderr.write('[ooxml-validator] building the oracle from source\n');
+  process.stderr.write('[ooxml-validate] building the oracle from source\n');
   try {
     await execFile('dotnet', ['build', project, '-c', 'Release'], {maxBuffer: 32 * 1024 * 1024});
   } catch (cause) {
     throw new Error(
-      `ooxml-validator: ${FROM_SOURCE} is set but \`dotnet build\` failed. ` +
+      `ooxml-validate: ${FROM_SOURCE} is set but \`dotnet build\` failed. ` +
         'A .NET SDK matching global.json is required for this path.',
       {cause},
     );
@@ -107,7 +107,7 @@ async function resolveOnce(): Promise<string> {
   if (override) {
     if (await isExecutable(override)) return override;
     throw new Error(
-      `ooxml-validator: ${BIN_OVERRIDE} is set to ${override}, which is not an executable file.`,
+      `ooxml-validate: ${BIN_OVERRIDE} is set to ${override}, which is not an executable file.`,
     );
   }
 
@@ -122,14 +122,14 @@ async function resolveOnce(): Promise<string> {
     const built = await buildFromSource();
     if (built) return built;
     throw new Error(
-      `ooxml-validator: ${FROM_SOURCE} is set but no oracle project was found. ` +
+      `ooxml-validate: ${FROM_SOURCE} is set but no oracle project was found. ` +
         'That path only works inside a checkout of shbernal/ooxml-validate.',
     );
   }
 
   if (!platform) {
     throw new Error(
-      `ooxml-validator: no prebuilt binary for ${process.platform}-${process.arch} ` +
+      `ooxml-validate: no prebuilt binary for ${process.platform}-${process.arch} ` +
         `(supported: ${SUPPORTED_PLATFORMS.join(', ')}). ` +
         `Build from source with ${FROM_SOURCE}=1 inside a checkout, or set ${BIN_OVERRIDE}.`,
     );
@@ -137,7 +137,7 @@ async function resolveOnce(): Promise<string> {
 
   if (process.env[NO_DOWNLOAD]) {
     throw new Error(
-      `ooxml-validator: no cached binary for ${PACKAGE_VERSION} on ${platform}, and ` +
+      `ooxml-validate: no cached binary for ${PACKAGE_VERSION} on ${platform}, and ` +
         `${NO_DOWNLOAD} forbids fetching one. Expected it at ` +
         `${cachedBinaryPath(PACKAGE_VERSION, platform)}.`,
     );

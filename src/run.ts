@@ -64,7 +64,7 @@ function spawnOracle(binary: string, args: readonly string[], stdin: string): Pr
     child.on('error', reject);
     child.on('close', (code) => {
       if (overflowed) {
-        reject(new Error(`ooxml-validator: the oracle produced more than ${MAX_STDOUT} bytes.`));
+        reject(new Error(`ooxml-validate: the oracle produced more than ${MAX_STDOUT} bytes.`));
         return;
       }
       resolve({code, stdout, stderr});
@@ -91,7 +91,7 @@ export async function runOracle(
   format: FileFormat = FILE_FORMAT,
 ): Promise<ValidationReport> {
   if (paths.length === 0) {
-    throw new Error('ooxml-validator: runOracle called with no paths.');
+    throw new Error('ooxml-validate: runOracle called with no paths.');
   }
 
   const binary = await resolveValidator();
@@ -102,7 +102,7 @@ export async function runOracle(
   const {code, stdout, stderr} = await spawnOracle(binary, args, `${paths.join('\n')}\n`);
 
   if (code !== 0 && code !== 1) {
-    throw new Error(`ooxml-validator: the oracle failed (exit ${String(code)}).\n${stderr.trim()}`);
+    throw new Error(`ooxml-validate: the oracle failed (exit ${String(code)}).\n${stderr.trim()}`);
   }
 
   let report: ValidationReport;
@@ -110,14 +110,14 @@ export async function runOracle(
     report = JSON.parse(stdout) as ValidationReport;
   } catch (cause) {
     throw new Error(
-      `ooxml-validator: could not parse the oracle's output: ${stdout.slice(0, 500)}`,
+      `ooxml-validate: could not parse the oracle's output: ${stdout.slice(0, 500)}`,
       {cause},
     );
   }
 
   if (!Array.isArray(report.results)) {
     throw new Error(
-      `ooxml-validator: the oracle returned no results array: ${stdout.slice(0, 500)}`,
+      `ooxml-validate: the oracle returned no results array: ${stdout.slice(0, 500)}`,
     );
   }
 
@@ -130,7 +130,7 @@ export async function oracleVersion(): Promise<{tool: string; sdkVersion: string
   const {code, stdout, stderr} = await spawnOracle(binary, ['--version'], '');
 
   if (code !== 0) {
-    throw new Error(`ooxml-validator: --version failed (exit ${String(code)}).\n${stderr.trim()}`);
+    throw new Error(`ooxml-validate: --version failed (exit ${String(code)}).\n${stderr.trim()}`);
   }
   return JSON.parse(stdout) as {tool: string; sdkVersion: string};
 }

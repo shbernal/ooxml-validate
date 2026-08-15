@@ -59,7 +59,7 @@ ROOT_RELS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 DOCUMENT_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
 <w:body>
-<w:p{paragraph_attributes}><w:r><w:t>ooxml-validator fixture</w:t></w:r></w:p>
+<w:p{paragraph_attributes}><w:r><w:t>ooxml-validate fixture</w:t></w:r></w:p>
 <w:sectPr/>
 </w:body>
 </w:document>

@@ -33,7 +33,7 @@ format and SDK version. It is literally what the CLI prints from inside this
 directory:
 
 ```sh
-ooxml-validator clean.docx clean.pptx clean.xlsx corrupt.pptx dirty.docx dirty.pptx dirty.xlsx
+ooxml-validate clean.docx clean.pptx clean.xlsx corrupt.pptx dirty.docx dirty.pptx dirty.xlsx
 ```
 
 The header carries `format` and `sdkVersion`, so any diff is attributable to a
@@ -43,7 +43,7 @@ specific bump.
 re-record after a deliberate change:
 
 ```sh
-OOXML_VALIDATOR_UPDATE_SNAPSHOT=1 dotnet test oracle.tests/OoxmlValidator.Tests.csproj
+OOXML_VALIDATE_UPDATE_SNAPSHOT=1 dotnet test oracle.tests/OoxmlValidate.Tests.csproj
 ```
 
 Then **read the diff before committing it**. Re-recording without reading it is

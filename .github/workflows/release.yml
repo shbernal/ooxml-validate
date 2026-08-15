@@ -19,7 +19,7 @@
 # job that says why beats a red X on a release that is otherwise perfect.
 #
 # To switch it on, once:
-#   1. Publish `ooxml-validator` manually, so the package exists.
+#   1. Publish `ooxml-validate` manually, so the package exists.
 #   2. Configure trusted publishing for it on npmjs.com, naming this repository,
 #      THIS FILE'S NAME (release.yml) and the `npm-publish` environment. npm checks
 #      all three; there is no token anywhere in this repo.
@@ -115,13 +115,13 @@ jobs:
       # only the Open XML SDK, which is the one thing it exists to pin. So the pin is
       # verified here, on the plain dependency graph, and a dependency the lock file
       # does not pin fails the release before a single binary is built.
-      - run: dotnet restore oracle/OoxmlValidator.csproj --locked-mode
-      - run: dotnet restore oracle.tests/OoxmlValidator.Tests.csproj --locked-mode
+      - run: dotnet restore oracle/OoxmlValidate.csproj --locked-mode
+      - run: dotnet restore oracle.tests/OoxmlValidate.Tests.csproj --locked-mode
 
       # A release must not ship an oracle whose own contract tests fail, and the
       # diagnostic snapshot must match — a release is exactly the wrong moment to
       # discover the baseline moved.
-      - run: dotnet test oracle.tests/OoxmlValidator.Tests.csproj
+      - run: dotnet test oracle.tests/OoxmlValidate.Tests.csproj
       - run: git diff --exit-code -- fixtures/
 
   # ---------------------------------------------------------------------------
@@ -193,7 +193,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          dotnet publish oracle/OoxmlValidator.csproj \
+          dotnet publish oracle/OoxmlValidate.csproj \
             -c Release \
             -r ${{ matrix.rid }} \
             -p:SelfContained=true \
@@ -214,10 +214,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          exe=ooxml-validator
-          [ "${{ matrix.rid }}" = "win-x64" ] && exe=ooxml-validator.exe
-          tar -czf "ooxml-validator-${{ matrix.rid }}.tar.gz" -C "out/${{ matrix.rid }}" "${exe}"
-          ls -lh "ooxml-validator-${{ matrix.rid }}.tar.gz"
+          exe=ooxml-validate
+          [ "${{ matrix.rid }}" = "win-x64" ] && exe=ooxml-validate.exe
+          tar -czf "ooxml-validate-${{ matrix.rid }}.tar.gz" -C "out/${{ matrix.rid }}" "${exe}"
+          ls -lh "ooxml-validate-${{ matrix.rid }}.tar.gz"
 
       # Only where the runner can execute what it just built. The cross-compiled
       # osx-x64 archive cannot be smoke-tested on an arm64 runner, and pretending
@@ -227,9 +227,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p smoke && tar -xzf "ooxml-validator-${{ matrix.rid }}.tar.gz" -C smoke
-          exe=smoke/ooxml-validator
-          [ "${{ matrix.rid }}" = "win-x64" ] && exe=smoke/ooxml-validator.exe
+          mkdir -p smoke && tar -xzf "ooxml-validate-${{ matrix.rid }}.tar.gz" -C smoke
+          exe=smoke/ooxml-validate
+          [ "${{ matrix.rid }}" = "win-x64" ] && exe=smoke/ooxml-validate.exe
 
           # Both halves matter: --version proves it starts and that -p:Version reached
           # the binary, and validating a real package proves the schema data survived
@@ -243,8 +243,8 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ooxml-validator-${{ matrix.rid }}
-          path: ooxml-validator-${{ matrix.rid }}.tar.gz
+          name: ooxml-validate-${{ matrix.rid }}
+          path: ooxml-validate-${{ matrix.rid }}.tar.gz
           if-no-files-found: error
           retention-days: 7
 
@@ -269,7 +269,7 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           path: staging
-          pattern: ooxml-validator-*
+          pattern: ooxml-validate-*
           merge-multiple: true
 
       # Five, counted rather than assumed. `fail-fast: false` on the matrix means a
@@ -352,7 +352,7 @@ jobs:
       id-token: write
     environment:
       name: npm-publish
-      url: https://www.npmjs.com/package/ooxml-validator
+      url: https://www.npmjs.com/package/ooxml-validate
     steps:
       - uses: actions/checkout@v5
         with:

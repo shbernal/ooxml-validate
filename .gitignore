@@ -15,7 +15,7 @@ bin/
 obj/
 
 # The downloaded-binary cache, when a contributor points it inside the repo.
-# The real default lives in ~/.cache/ooxml-validator/.
+# The real default lives in ~/.cache/ooxml-validate/.
 .cache/
 
 # Editors

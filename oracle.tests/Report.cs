@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace OoxmlValidator.Tests;
+namespace OoxmlValidate.Tests;
 
 /// <summary>
 /// The report shape, redeclared here rather than reused from the CLI's own records.

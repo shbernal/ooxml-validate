@@ -1,5 +1,5 @@
 {
-  "name": "ooxml-validator",
+  "name": "ooxml-validate",
   "version": "0.0.1",
   "description": "Validate OOXML documents (pptx, xlsx, docx) against the Open XML SDK schema validator, from Node.",
   "license": "MIT",
@@ -28,7 +28,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "ooxml-validator": "./dist/cli.js"
+    "ooxml-validate": "./dist/cli.js"
   },
   "publishConfig": {
     "access": "public"
@@ -47,10 +47,10 @@
     "lint:fix": "biome check --write --error-on-warnings src scripts test",
     "format": "biome format --write src scripts test",
     "test": "node --test \"test/**/*.test.ts\"",
-    "oracle:build": "dotnet build oracle/OoxmlValidator.csproj -c Release",
-    "oracle:test": "dotnet test oracle.tests/OoxmlValidator.Tests.csproj",
-    "oracle:snapshot": "OOXML_VALIDATOR_UPDATE_SNAPSHOT=1 dotnet test oracle.tests/OoxmlValidator.Tests.csproj",
-    "test:integration": "pnpm run oracle:build && OOXML_VALIDATOR_BIN=\"$PWD/oracle/bin/Release/net10.0/ooxml-validator\" pnpm test",
+    "oracle:build": "dotnet build oracle/OoxmlValidate.csproj -c Release",
+    "oracle:test": "dotnet test oracle.tests/OoxmlValidate.Tests.csproj",
+    "oracle:snapshot": "OOXML_VALIDATE_UPDATE_SNAPSHOT=1 dotnet test oracle.tests/OoxmlValidate.Tests.csproj",
+    "test:integration": "pnpm run oracle:build && OOXML_VALIDATE_BIN=\"$PWD/oracle/bin/Release/net10.0/ooxml-validate\" pnpm test",
     "verify": "pnpm run lint && pnpm run typecheck && pnpm run test",
     "prepack": "pnpm run build",
     "docs:list": "python3 scripts/docs-list.py",

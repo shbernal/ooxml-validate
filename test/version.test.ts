@@ -23,5 +23,5 @@ test('the release tag is the version with a v prefix', () => {
 test('the package is the unscoped name reserved for it', () => {
   // D1. Renaming to a scope is a deliberate decision, not something that should
   // slip through in a package.json edit.
-  assert.equal(PACKAGE_NAME, 'ooxml-validator');
+  assert.equal(PACKAGE_NAME, 'ooxml-validate');
 });

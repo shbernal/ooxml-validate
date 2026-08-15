@@ -69,11 +69,11 @@ jobs:
       # consumer of this package with nothing in any diff to show for it. This step
       # failing means the lock file and the project disagree — regenerate it in the
       # PR that caused it. See docs/sdk-pin.md.
-      - run: dotnet restore oracle/OoxmlValidator.csproj --locked-mode
-      - run: dotnet restore oracle.tests/OoxmlValidator.Tests.csproj --locked-mode
+      - run: dotnet restore oracle/OoxmlValidate.csproj --locked-mode
+      - run: dotnet restore oracle.tests/OoxmlValidate.Tests.csproj --locked-mode
 
-      - run: dotnet build oracle.tests/OoxmlValidator.Tests.csproj --no-restore
-      - run: dotnet test oracle.tests/OoxmlValidator.Tests.csproj --no-build
+      - run: dotnet build oracle.tests/OoxmlValidate.Tests.csproj --no-restore
+      - run: dotnet test oracle.tests/OoxmlValidate.Tests.csproj --no-build
 
       # The snapshot test above already fails on a moved diagnostic. This makes the
       # *other* failure mode loud: a run that rewrote the snapshot and left the
@@ -103,7 +103,7 @@ jobs:
       # published release to download.
       - run: pnpm test
         env:
-          OOXML_VALIDATOR_BIN: ${{ github.workspace }}/oracle/bin/Release/net10.0/ooxml-validator
+          OOXML_VALIDATE_BIN: ${{ github.workspace }}/oracle/bin/Release/net10.0/ooxml-validate
 
   # The one path a source build can never exercise: resolving, downloading,
   # checksumming, attesting and extracting a real published binary. It is also the
@@ -191,7 +191,7 @@ jobs:
         if: steps.release.outputs.exists == 'true'
         shell: bash
         env:
-          OOXML_VALIDATOR_NO_DOWNLOAD: '1'
+          OOXML_VALIDATE_NO_DOWNLOAD: '1'
         run: |
           set -euo pipefail
           node --input-type=module -e '

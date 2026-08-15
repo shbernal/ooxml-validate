@@ -88,7 +88,7 @@ export async function validateBuffers(
   if (inputs.length === 0) return [];
 
   const format: FileFormat = options.format ?? FILE_FORMAT;
-  const directory = await mkdtemp(join(tmpdir(), 'ooxml-validator-'));
+  const directory = await mkdtemp(join(tmpdir(), 'ooxml-validate-'));
 
   try {
     const identities = new Map<string, string>();
@@ -116,7 +116,7 @@ export async function validateBuffers(
         // nobody submitted. Silently dropping it, or guessing by position, would turn
         // a contract violation into a wrong answer about someone's document.
         throw new Error(
-          `ooxml-validator: got a result for ${entry.result.file}, which was not submitted. ` +
+          `ooxml-validate: got a result for ${entry.result.file}, which was not submitted. ` +
             'Refusing to guess which input it belongs to.',
         );
       }

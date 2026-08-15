@@ -41,13 +41,13 @@ test('an unobtainable validator is a hard failure under CI', async () => {
   // A silently-skipped schema suite is green while proving nothing. Locally that is a
   // reasonable trade for a large download; in CI, obtaining the binary is part of the
   // job, so it never is.
-  await withEnv({CI: '1', OOXML_VALIDATOR_BIN: '/nonexistent/ooxml-validator'}, async () => {
+  await withEnv({CI: '1', OOXML_VALIDATE_BIN: '/nonexistent/ooxml-validate'}, async () => {
     await assert.rejects(validatorAvailable(), /must not be skipped in CI/);
   });
 });
 
 test('locally it warns once on stderr and returns false', async () => {
-  await withEnv({CI: undefined, OOXML_VALIDATOR_BIN: '/nonexistent/ooxml-validator'}, async () => {
+  await withEnv({CI: undefined, OOXML_VALIDATE_BIN: '/nonexistent/ooxml-validate'}, async () => {
     const written: string[] = [];
     const original = process.stderr.write.bind(process.stderr);
     // biome-ignore lint/suspicious/noExplicitAny: replacing a stream method for capture
@@ -76,7 +76,7 @@ test('locally it warns once on stderr and returns false', async () => {
 });
 
 test('an override pointing at a non-executable is rejected, not ignored', async () => {
-  await withEnv({CI: undefined, OOXML_VALIDATOR_BIN: '/nonexistent/ooxml-validator'}, async () => {
+  await withEnv({CI: undefined, OOXML_VALIDATE_BIN: '/nonexistent/ooxml-validate'}, async () => {
     const {resolveValidator} = await import('../src/resolve.ts');
     await assert.rejects(resolveValidator(), /not an executable file/);
   });
@@ -86,11 +86,11 @@ test('a failed resolution is not memoized', async () => {
   // Resolution failures are very often a transient network problem. Caching the
   // rejection would make every later call in a long-lived process keep failing for a
   // reason that stopped being true minutes ago.
-  await withEnv({CI: undefined, OOXML_VALIDATOR_BIN: '/nonexistent/one'}, async () => {
+  await withEnv({CI: undefined, OOXML_VALIDATE_BIN: '/nonexistent/one'}, async () => {
     const {resolveValidator} = await import('../src/resolve.ts');
     await assert.rejects(resolveValidator(), /nonexistent\/one/);
 
-    process.env.OOXML_VALIDATOR_BIN = '/nonexistent/two';
+    process.env.OOXML_VALIDATE_BIN = '/nonexistent/two';
     await assert.rejects(resolveValidator(), /nonexistent\/two/);
   });
 });

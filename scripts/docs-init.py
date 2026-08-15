@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 
-PROJECT_NAME = "ooxml-validator"
+PROJECT_NAME = "ooxml-validate"
 PACKAGE_SCRIPTS = {
     "docs:init": "python3 scripts/docs-init.py",
     "docs:list": "python3 scripts/docs-list.py",
@@ -35,7 +35,7 @@ def project_name(root: Path, explicit: str | None = None) -> str:
 
 
 def render(template: str, name: str) -> str:
-    return template.replace("ooxml-validator", name)
+    return template.replace("ooxml-validate", name)
 
 
 TEMPLATES = {
@@ -91,8 +91,8 @@ Separate current behavior, planned behavior, and TODOs. Do not invent behavior
 to make a page feel complete.
 """,
     "docs/docs.json": """{
-  "name": "ooxml-validator",
-  "description": "Documentation for ooxml-validator.",
+  "name": "ooxml-validate",
+  "description": "Documentation for ooxml-validate.",
   "navigation": [
     {
       "group": "Start",
@@ -107,17 +107,17 @@ to make a page feel complete.
 """,
     "docs/index.md": """---
 doc-schema-version: 1
-title: "ooxml-validator"
-summary: "Start here for the purpose, setup, and main workflows in ooxml-validator."
+title: "ooxml-validate"
+summary: "Start here for the purpose, setup, and main workflows in ooxml-validate."
 read_when:
   - Getting oriented in this project
   - Updating the main project overview
 doc_type: "overview"
 ---
 
-# ooxml-validator
+# ooxml-validate
 
-This page is the documentation entry point for ooxml-validator.
+This page is the documentation entry point for ooxml-validate.
 
 ## What This Project Does
 
@@ -140,7 +140,7 @@ Record the smallest command that proves the current project still works.
     "docs/architecture.md": """---
 doc-schema-version: 1
 title: "Architecture"
-summary: "How ooxml-validator is structured and where major responsibilities live."
+summary: "How ooxml-validate is structured and where major responsibilities live."
 read_when:
   - Changing module boundaries
   - Explaining architecture or ownership decisions
@@ -171,7 +171,7 @@ List supported ways to add behavior without rewriting core code.
     "docs/reference/index.md": """---
 doc-schema-version: 1
 title: "Reference"
-summary: "Stable commands, configuration, APIs, and generated references for ooxml-validator."
+summary: "Stable commands, configuration, APIs, and generated references for ooxml-validate."
 read_when:
   - Looking up command, config, or API details
   - Adding a reference page
@@ -199,7 +199,7 @@ states.
     "docs/troubleshooting.md": """---
 doc-schema-version: 1
 title: "Troubleshooting"
-summary: "Observable symptoms, checks, causes, and fixes for ooxml-validator."
+summary: "Observable symptoms, checks, causes, and fixes for ooxml-validate."
 read_when:
   - Debugging a user-visible failure
   - Adding recovery guidance

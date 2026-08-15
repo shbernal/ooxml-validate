@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <AssemblyName>ooxml-validator</AssemblyName>
-    <RootNamespace>OoxmlValidator</RootNamespace>
+    <AssemblyName>ooxml-validate</AssemblyName>
+    <RootNamespace>OoxmlValidate</RootNamespace>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -26,14 +26,14 @@
   <ItemGroup>
     <!-- The test project drives Program.Main directly rather than shelling out,
          so the CLI's internals are visible to it and to nothing else. -->
-    <InternalsVisibleTo Include="OoxmlValidator.Tests" />
+    <InternalsVisibleTo Include="OoxmlValidate.Tests" />
   </ItemGroup>
 
   <!-- How the release binaries are published, and why none of it is written here.
 
        The release workflow publishes self-contained single-file binaries per RID:
 
-           dotnet publish oracle/OoxmlValidator.csproj -c Release -r <rid>
+           dotnet publish oracle/OoxmlValidate.csproj -c Release -r <rid>
                -p:SelfContained=true
                -p:PublishSingleFile=true
                -p:IncludeNativeLibrariesForSelfExtract=true

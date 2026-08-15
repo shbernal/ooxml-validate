@@ -7,26 +7,26 @@ const DIGEST_A = 'a'.repeat(64);
 const DIGEST_B = 'b'.repeat(64);
 
 const SUMS = [
-  `${DIGEST_A}  ooxml-validator-linux-x64.tar.gz`,
-  `${DIGEST_B}  ooxml-validator-osx-arm64.tar.gz`,
+  `${DIGEST_A}  ooxml-validate-linux-x64.tar.gz`,
+  `${DIGEST_B}  ooxml-validate-osx-arm64.tar.gz`,
   '',
 ].join('\n');
 
 test('reads the digest for the requested asset', () => {
-  assert.equal(expectedDigest(SUMS, 'ooxml-validator-linux-x64.tar.gz'), DIGEST_A);
-  assert.equal(expectedDigest(SUMS, 'ooxml-validator-osx-arm64.tar.gz'), DIGEST_B);
+  assert.equal(expectedDigest(SUMS, 'ooxml-validate-linux-x64.tar.gz'), DIGEST_A);
+  assert.equal(expectedDigest(SUMS, 'ooxml-validate-osx-arm64.tar.gz'), DIGEST_B);
 });
 
 test('accepts the binary-mode asterisk sha256sum writes', () => {
-  const binaryMode = `${DIGEST_A} *ooxml-validator-win-x64.tar.gz\n`;
-  assert.equal(expectedDigest(binaryMode, 'ooxml-validator-win-x64.tar.gz'), DIGEST_A);
+  const binaryMode = `${DIGEST_A} *ooxml-validate-win-x64.tar.gz\n`;
+  assert.equal(expectedDigest(binaryMode, 'ooxml-validate-win-x64.tar.gz'), DIGEST_A);
 });
 
 test('an unlisted asset is a hard failure, not an unchecked pass', () => {
   // "No digest to compare against" must never resolve the same way as "the digest
   // matched" — that is the whole reason the checksum step exists.
   assert.throws(
-    () => expectedDigest(SUMS, 'ooxml-validator-win-x64.tar.gz'),
+    () => expectedDigest(SUMS, 'ooxml-validate-win-x64.tar.gz'),
     /not listed in SHA256SUMS/,
   );
 });

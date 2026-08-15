@@ -31,7 +31,7 @@ const RELEASE_BASE = `https://github.com/${REPO}/releases/download`;
  * attestation API and no `gh`. Documented rather than silent: skipping is a decision
  * someone makes, not a default that quietly degrades.
  */
-const SKIP_ATTESTATION = 'OOXML_VALIDATOR_SKIP_ATTESTATION';
+const SKIP_ATTESTATION = 'OOXML_VALIDATE_SKIP_ATTESTATION';
 
 export interface DownloadOptions {
   readonly version: string;
@@ -41,7 +41,7 @@ export interface DownloadOptions {
 }
 
 function defaultProgress(message: string): void {
-  process.stderr.write(`[ooxml-validator] ${message}\n`);
+  process.stderr.write(`[ooxml-validate] ${message}\n`);
 }
 
 async function fetchOrThrow(url: string): Promise<Response> {
@@ -49,11 +49,11 @@ async function fetchOrThrow(url: string): Promise<Response> {
   try {
     response = await fetch(url);
   } catch (cause) {
-    throw new Error(`ooxml-validator: could not reach ${url}: ${String(cause)}`, {cause});
+    throw new Error(`ooxml-validate: could not reach ${url}: ${String(cause)}`, {cause});
   }
   if (!response.ok) {
     throw new Error(
-      `ooxml-validator: ${url} returned ${response.status} ${response.statusText}. ` +
+      `ooxml-validate: ${url} returned ${response.status} ${response.statusText}. ` +
         'If this is a 404, the release for this package version may not exist yet.',
     );
   }
@@ -76,7 +76,7 @@ export function expectedDigest(sha256sums: string, asset: string): string {
     if (match && match[2] === asset) return match[1] as string;
   }
   throw new Error(
-    `ooxml-validator: ${asset} is not listed in SHA256SUMS. Refusing to use an ` +
+    `ooxml-validate: ${asset} is not listed in SHA256SUMS. Refusing to use an ` +
       'archive with nothing to check it against.',
   );
 }
@@ -105,7 +105,7 @@ async function verifyAttestation(
   } catch (cause) {
     const detail = cause instanceof Error ? cause.message : String(cause);
     throw new Error(
-      `ooxml-validator: could not verify the build provenance of ${archivePath}.\n` +
+      `ooxml-validate: could not verify the build provenance of ${archivePath}.\n` +
         `${detail}\n\n` +
         'The checksum proves the download was not truncated; this check proves the archive ' +
         `came from ${REPO}'s release workflow, and it is the one that matters if the release ` +
@@ -123,13 +123,23 @@ async function verifyAttestation(
  *
  * No dependency and no branch per platform: GNU tar, bsdtar and Windows' bundled
  * `tar.exe` all handle this, and tar preserves the executable bit that zip loses.
+ *
+ * **Relative paths, with `cwd` doing the work — not a stylistic choice.** Given an
+ * absolute Windows path, GNU tar reads the drive letter as an `rsh` host spec and
+ * tries to connect to a machine called `C`:
+ *
+ *     tar (child): Cannot connect to C: resolve failed
+ *
+ * Windows ships bsdtar, which is fine with drive letters, but Git for Windows puts
+ * its GNU tar earlier on PATH — so which one answers is not something this code gets
+ * to decide. Relative names have no colon to misread, and every tar accepts them.
  */
-async function extract(archivePath: string, into: string): Promise<void> {
+async function extract(directory: string, archive: string, into: string): Promise<void> {
   try {
-    await execFile('tar', ['-xzf', archivePath, '-C', into]);
+    await execFile('tar', ['-xzf', archive, '-C', into], {cwd: directory});
   } catch (cause) {
     throw new Error(
-      `ooxml-validator: could not extract ${archivePath}. ` +
+      `ooxml-validate: could not extract ${archive}. ` +
         'This needs `tar` on PATH (bundled with Windows 10 1803 and later).',
       {cause},
     );
@@ -180,7 +190,7 @@ export async function downloadBinary(options: DownloadOptions): Promise<string> 
   const tag = `v${version}`;
   const target = cachedBinaryPath(version, platform);
 
-  const staging = await mkdtemp(join(tmpdir(), 'ooxml-validator-dl-'));
+  const staging = await mkdtemp(join(tmpdir(), 'ooxml-validate-dl-'));
   try {
     onProgress(`fetching ${asset} ${tag} (~40 MB, once per version)`);
 
@@ -196,7 +206,7 @@ export async function downloadBinary(options: DownloadOptions): Promise<string> 
     const actual = sha256(archiveBytes);
     if (actual !== expected) {
       throw new Error(
-        `ooxml-validator: checksum mismatch for ${asset}.\n` +
+        `ooxml-validate: checksum mismatch for ${asset}.\n` +
           `  expected ${expected}\n  actual   ${actual}\n` +
           'The download is corrupt or the release has changed. Nothing was cached.',
       );
@@ -210,13 +220,13 @@ export async function downloadBinary(options: DownloadOptions): Promise<string> 
 
     const extractedInto = join(staging, 'unpacked');
     await mkdir(extractedInto, {recursive: true});
-    await extract(archivePath, extractedInto);
+    await extract(staging, asset, 'unpacked');
 
     const extractedBinary = join(extractedInto, executableName(platform));
     try {
       await stat(extractedBinary);
     } catch (cause) {
-      throw new Error(`ooxml-validator: ${asset} did not contain ${executableName(platform)}.`, {
+      throw new Error(`ooxml-validate: ${asset} did not contain ${executableName(platform)}.`, {
         cause,
       });
     }

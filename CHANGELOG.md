@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `ooxml-validator` are recorded here.
+All notable changes to `ooxml-validate` are recorded here.
 
 Before 1.0 the JSON report shape, the exit codes and the TypeScript types may
 change. Every such change appears here, with a version bump — it will not happen
@@ -32,4 +32,4 @@ a real install rather than by a local link.
 - Lazy binary resolution with checksum and GitHub build provenance verification,
   a shared cache outside the package directory, and an opt-in source build.
 - Batching that holds the process to one validator child at a time.
-- An `ooxml-validator` CLI.
+- An `ooxml-validate` CLI.

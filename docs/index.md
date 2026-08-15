@@ -1,14 +1,14 @@
 ---
 doc-schema-version: 1
-title: "ooxml-validator"
-summary: "Start here for the purpose, setup, and main workflows in ooxml-validator."
+title: "ooxml-validate"
+summary: "Start here for the purpose, setup, and main workflows in ooxml-validate."
 read_when:
   - Getting oriented in this project
   - Updating the main project overview
 doc_type: "overview"
 ---
 
-# ooxml-validator
+# ooxml-validate
 
 One shared OOXML validation oracle: a .NET CLI wrapping Microsoft's Open XML SDK
 schema validator, plus a Node package that resolves, runs and batches it.

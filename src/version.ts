@@ -25,7 +25,7 @@ function readManifest(): PackageManifest {
   const parsed = JSON.parse(raw) as Partial<PackageManifest>;
 
   if (typeof parsed.name !== 'string' || typeof parsed.version !== 'string') {
-    throw new Error(`ooxml-validator: package.json at ${url.pathname} has no name/version`);
+    throw new Error(`ooxml-validate: package.json at ${url.pathname} has no name/version`);
   }
   return {name: parsed.name, version: parsed.version};
 }
