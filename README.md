@@ -139,6 +139,13 @@ Pass `--files-from <path>` to read newline-delimited paths from a file, or
 arguments. This is how large corpora are validated without hitting `ARG_MAX`;
 duplicate paths collapse to one result.
 
+### Running it through a package script
+
+A bare `--` ends the options — everything after it is a path, even if it is
+spelled like a flag. This matters because package managers forward the separator
+rather than eating it, so `pnpm run validate:ooxml -- book.xlsx` reaches the CLI
+with the `--` still attached. Both spellings work.
+
 ### Conformance target
 
 Validation runs against **Microsoft 365** conformance by default, pinned by this

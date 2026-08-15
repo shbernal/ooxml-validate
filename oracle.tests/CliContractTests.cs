@@ -49,6 +49,7 @@ public sealed class CliContractTests
     [InlineData("--format NotAVersion x.pptx")]
     [InlineData("--files-from")]
     [InlineData("--nonsense")]
+    [InlineData("--")]
     public void ArgumentErrors_ExitTwo_WithNothingOnStdout(string commandLine)
     {
         var args = commandLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -105,6 +106,48 @@ public sealed class CliContractTests
         Assert.Contains(".pptx", result.Stderr, StringComparison.Ordinal);
         Assert.Contains(".xlsx", result.Stderr, StringComparison.Ordinal);
         Assert.Contains(".docx", result.Stderr, StringComparison.Ordinal);
+    }
+
+    // ---- `--` ends the options -----------------------------------------------------
+
+    [Fact]
+    public void DoubleDash_EndsTheOptions_AndTheFileAfterItIsValidatedNormally()
+    {
+        // Consumers reach this program through a package script, and `pnpm run
+        // validate:ooxml -- book.xlsx` forwards the separator verbatim. Rejecting it made
+        // the habitual spelling the broken one, and the alternative — a wrapper script per
+        // repo to shift it off — is the divergence this oracle exists to remove.
+        var path = Fixtures.Path_(Fixtures.CleanXlsx);
+
+        var result = Cli.Run("--", path);
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stderr);
+
+        var single = Report.Parse(result.Stdout).Results.Single();
+        Assert.True(single.Valid);
+        Assert.Equal(path, single.File);
+    }
+
+    [Fact]
+    public void DoubleDash_LeavesEarlierOptionsAlone()
+    {
+        var result = Cli.Run("--format", "Office2013", "--", Fixtures.Path_(Fixtures.CleanPptx));
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("Office2013", Report.Parse(result.Stdout).Format);
+    }
+
+    [Fact]
+    public void AfterDoubleDash_AnOptionLookalikeIsAPath()
+    {
+        // The half of the contract that makes `--` worth having: what follows is a path
+        // even when it is spelled like a flag. `--version` here must not print a version.
+        var result = Cli.Run("--", "--version");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Contains("Unsupported file extension", result.Stderr, StringComparison.Ordinal);
     }
 
     // ---- a bad package is a finding, not a tool failure ---------------------------

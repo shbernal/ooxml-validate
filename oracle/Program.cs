@@ -43,7 +43,7 @@ internal static class Program
     private const int MaxErrorsPerFile = 1_000;
 
     private const string Usage =
-        "Usage: ooxml-validate [--format <FileFormatVersions>] [--files-from <path|->] [<file> ...]\n" +
+        "Usage: ooxml-validate [--format <FileFormatVersions>] [--files-from <path|->] [--] [<file> ...]\n" +
         "       ooxml-validate --version";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -268,10 +268,29 @@ internal sealed record CliOptions(FileFormatVersions Format, IReadOnlyList<strin
         var format = DefaultFormat;
         var showVersion = false;
         var files = new List<string>();
+        var endOfOptions = false;
 
         for (var index = 0; index < arguments.Count; index += 1)
         {
             var argument = arguments[index];
+
+            if (endOfOptions)
+            {
+                files.Add(argument);
+                continue;
+            }
+
+            if (argument == "--")
+            {
+                // Everything after this is a path, whatever it looks like. Consumers reach
+                // this program through a package script, and `pnpm run validate:ooxml --
+                // book.xlsx` forwards the separator verbatim — so the habitual spelling was
+                // the one that failed with "Unknown option: --". A per-repo wrapper that
+                // shifted it off is exactly the divergence this oracle exists to remove.
+                // It also makes a file genuinely named like an option addressable.
+                endOfOptions = true;
+                continue;
+            }
 
             if (argument == "--version")
             {

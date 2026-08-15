@@ -105,9 +105,12 @@ version bump.
 ## Oracle CLI
 
 ```
-ooxml-validate [--format <FileFormatVersions>] [--files-from <path|->] [<file> ...]
+ooxml-validate [--format <FileFormatVersions>] [--files-from <path|->] [--] [<file> ...]
 ooxml-validate --version
 ```
 
 `--files-from` reads newline-delimited paths, `-` meaning stdin, and composes
 with explicit path arguments. `--version` prints `{tool, sdkVersion}` as JSON.
+A bare `--` ends the options: everything after it is a path, even if it is
+spelled like a flag. Package managers forward the separator when you run the CLI
+through a script (`pnpm run validate:ooxml -- book.xlsx`), so it has to work.
