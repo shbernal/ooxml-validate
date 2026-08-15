@@ -21,10 +21,19 @@
 # To switch it on, once:
 #   1. Publish `ooxml-validate` manually, so the package exists.
 #   2. Configure trusted publishing for it on npmjs.com, naming this repository,
-#      THIS FILE'S NAME (release.yml) and the `npm-publish` environment. npm checks
+#      THIS FILE'S NAME (publish.yml) and the `npm-publish` environment. npm checks
 #      all three; there is no token anywhere in this repo.
 #   3. Restrict the `npm-publish` environment to tags.
 #   4. `gh variable set NPM_PUBLISH_ENABLED --body true`
+#
+# THE FILENAME IS PART OF THE CREDENTIAL. `publish.yml` is not a description of
+# what this workflow does — it builds binaries and cuts a GitHub Release too, and
+# its `name:` says Release accordingly. The file is called publish.yml because
+# npm's trusted publisher config names it, and that config is the harder half of
+# the pair to change safely. Renaming this file revokes the identity: the very
+# next release fails its OIDC exchange with a 404 that reads as "package not
+# found", which is the single most misleading error in this whole pipeline.
+# Rename it only together with the npm side.
 #
 # Then rehearse before trusting it: dispatch with dry_run on and read the result.
 #
@@ -447,7 +456,7 @@ jobs:
             echo "::error::npm's OIDC token exchange was rejected"
             echo "A real publish from this tag would fail. npm reports a rejected identity"
             echo "as a 404, so read the trusted publisher on npmjs.com — its repository,"
-            echo "workflow filename (release.yml) and environment (npm-publish) must match."
+            echo "workflow filename (publish.yml) and environment (npm-publish) must match."
             exit 1
           fi
           echo "OIDC token exchange succeeded — this tag would publish for real"
