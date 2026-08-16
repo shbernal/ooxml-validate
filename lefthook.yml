@@ -10,6 +10,21 @@
 # `node_modules/.bin` shim: `pnpm exec` re-verifies the whole dependency tree before
 # the tool sees an argument, which is real overhead on every single invocation.
 
+# Commit-message rules shared across every repo here, so the regex has one
+# definition rather than one copy per project. Lefthook fetches this on `install`
+# and caches it under .git/info/lefthook-remotes/; refetch_frequency is what lets
+# a fix in the shared repo ever arrive. The tag is pinned on purpose — a branch
+# would mean any push there changes what this repo runs.
+#
+# Jobs merge rather than override, so adding a local commit-msg job later does
+# not displace this one.
+remotes:
+  - git_url: https://github.com/shbernal/lefthook-rules
+    ref: v1
+    configs:
+      - rules/no-ai-attribution.yml
+    refetch_frequency: 24h
+
 # Fast, staged-scoped: format + lint only what you're committing, and re-stage any
 # autofixes so the commit is always Biome-clean.
 pre-commit:
