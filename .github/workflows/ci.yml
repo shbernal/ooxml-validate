@@ -73,7 +73,7 @@ jobs:
       - run: dotnet restore oracle.tests/OoxmlValidate.Tests.csproj --locked-mode
 
       - run: dotnet build oracle.tests/OoxmlValidate.Tests.csproj --no-restore
-      - run: dotnet test oracle.tests/OoxmlValidate.Tests.csproj --no-build
+      - run: dotnet test --project oracle.tests/OoxmlValidate.Tests.csproj --no-build
 
       # The snapshot test above already fails on a moved diagnostic. This makes the
       # *other* failure mode loud: a run that rewrote the snapshot and left the

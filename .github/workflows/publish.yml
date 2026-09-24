@@ -130,7 +130,7 @@ jobs:
       # A release must not ship an oracle whose own contract tests fail, and the
       # diagnostic snapshot must match — a release is exactly the wrong moment to
       # discover the baseline moved.
-      - run: dotnet test oracle.tests/OoxmlValidate.Tests.csproj
+      - run: dotnet test --project oracle.tests/OoxmlValidate.Tests.csproj
       - run: git diff --exit-code -- fixtures/
 
   # ---------------------------------------------------------------------------

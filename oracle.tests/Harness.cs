@@ -1,12 +1,14 @@
 using System.Reflection;
 using OoxmlValidate;
+using Xunit.Sdk;
+using Xunit.v3;
 
 // Every test in this assembly drives Program.Main in-process, which means redirecting
 // Console.Out / Console.Error / Console.In — process-global state. Two tests doing that
 // concurrently would interleave each other's output and fail at random. Running the CLI
 // out-of-process instead would make the tests independent, but at ~0.3 s of startup each
 // it would also make them slow enough that people stop running them.
-[assembly: CollectionBehavior(DisableTestParallelization = true)]
+[assembly: Parallelization(Mode = ParallelMode.None)]
 
 namespace OoxmlValidate.Tests;
 
