@@ -55,7 +55,7 @@
     {
       "description": "The rest of the NuGet tree (test-only packages) batches normally.",
       "matchManagers": ["nuget"],
-      "excludePackageNames": ["DocumentFormat.OpenXml"],
+      "matchPackageNames": ["!DocumentFormat.OpenXml"],
       "groupName": "nuget (test tooling)"
     },
     {
