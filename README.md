@@ -97,10 +97,11 @@ could not be opened is a `2`, never a `0` — the distinction between "clean" an
     {
       "file": "deck.pptx",    // echoed back exactly as given
       "valid": false,
+      "truncated": false,     // true when the 1000-per-file cap dropped diagnostics
       "errors": [
         {
           "id": "Sch_UndeclaredAttribute",
-          "type": "Schema",   // Schema | Semantic | MarkupCompatibility | Package
+          "type": "Schema",   // Schema | Semantic | MarkupCompatibility | Package | Limit
           "description": "The 'bogus' attribute is not declared.",
           "partUri": "/ppt/slides/slide1.xml",  // null when unattributable
           "xpath": "/p:sld[1]"                  // null when unattributable
@@ -139,7 +140,10 @@ which you can set yourself to override it), so a package that understates its ow
 size ends as a `PackageOpenError` on that file instead of an out-of-memory kill of
 the whole batch.
 
-Errors are capped at 1000 per file.
+Errors are capped at 1000 per file, and `truncated` says whether the cap
+dropped any. A truncated list is a prefix of the real set, so do not baseline it as
+if it were complete: an SDK bump that adds one early-sorting diagnostic pushes a
+different one off the end, and the diff shows a removal nobody fixed.
 
 ### Batching
 

@@ -29,6 +29,7 @@ internal sealed record Report(
 internal sealed record ReportResult(
     string File,
     bool Valid,
+    bool Truncated,
     IReadOnlyList<ReportDiagnostic> Errors);
 
 internal sealed record ReportDiagnostic(

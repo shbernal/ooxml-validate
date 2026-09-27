@@ -82,6 +82,7 @@ function report(): void {
       ? {
           file,
           valid: false,
+          truncated: false,
           errors: [
             {
               id: 'Sch_Fake',
@@ -92,7 +93,7 @@ function report(): void {
             },
           ],
         }
-      : {file, valid: true, errors: []},
+      : {file, valid: true, truncated: false, errors: []},
   );
 
   process.stdout.write(`${JSON.stringify({format, sdkVersion: '0.0.0', results})}\n`);

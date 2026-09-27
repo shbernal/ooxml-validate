@@ -77,6 +77,7 @@ describe('validate', {skip}, () => {
 
   test('diagnostics carry the fields consumers key on', async () => {
     const report = await validate([fixture('dirty.pptx')]);
+    assert.equal(report.results[0]?.truncated, false);
     const diagnostic = report.results[0]?.errors[0];
 
     assert.ok(diagnostic);

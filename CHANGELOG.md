@@ -11,6 +11,14 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Changed
+
+- **Report shape:** every result carries `truncated`, `true` when the
+  1000-per-file diagnostic cap dropped some. A file at the cap and a file with
+  forty thousand diagnostics used to be indistinguishable, and a capped list
+  baselined as complete loses entries on SDK bumps that fixed nothing. The
+  diagnostic snapshot gains `"truncated": false` on every entry and nothing else.
+
 ### Added
 
 - `OOXML_VALIDATE_TIMEOUT_MS` bounds each oracle invocation (default two

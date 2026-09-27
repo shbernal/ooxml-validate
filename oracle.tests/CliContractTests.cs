@@ -219,6 +219,64 @@ public sealed class CliContractTests
         Assert.True(report.Results.Single(r => r.File != bomb).Valid);
     }
 
+    // ---- the per-file cap is visible ---------------------------------------------
+
+    [Theory]
+    [InlineData(999, 999, false)]
+    [InlineData(1000, 1000, false)]
+    [InlineData(1001, 1000, true)]
+    [InlineData(1500, 1000, true)]
+    public void ErrorCap_IsReportedAsTruncated_OnlyWhenDiagnosticsWereDropped(
+        int offending, int reported, bool truncated)
+    {
+        // A capped list is a prefix of the real set; without the flag, a file at the
+        // cap and a file far past it look identical. Built here, not in fixtures/: a
+        // thousand-entry file would swamp the diagnostic snapshot.
+        using var temp = new TempDirectory();
+        var deck = temp.CopyFixture(Fixtures.CleanPptx, "many-errors.pptx");
+        using (var archive = ZipFile.Open(deck, ZipArchiveMode.Update))
+        {
+            var entry = archive.GetEntry("ppt/slides/slide1.xml")!;
+            string xml;
+            using (var reader = new StreamReader(entry.Open()))
+            {
+                xml = reader.ReadToEnd();
+            }
+
+            // One undeclared attribute per paragraph, one diagnostic each.
+            var paragraph = "<a:p bogus=\"1\"><a:r><a:t>x</a:t></a:r></a:p>";
+            var body = string.Concat(Enumerable.Repeat(paragraph, offending));
+            var rewritten = System.Text.RegularExpressions.Regex.Replace(
+                xml, "<a:p>.*?</a:p>", body.Replace("$", "$$"));
+
+            entry.Delete();
+            using var writer = new StreamWriter(archive.CreateEntry("ppt/slides/slide1.xml").Open());
+            writer.Write(rewritten);
+        }
+
+        var result = Cli.Run(deck);
+
+        Assert.Equal(1, result.ExitCode);
+        var single = Report.Parse(result.Stdout).Results.Single();
+        Assert.Equal(reported, single.Errors.Count);
+        Assert.Equal(truncated, single.Truncated);
+        Assert.All(single.Errors, error => Assert.Equal("Sch_UndeclaredAttribute", error.Id));
+    }
+
+    [Fact]
+    public void Truncated_IsAlwaysPresent_EvenWhenFalse()
+    {
+        // Explicit, never inferential: a consumer must not have to treat an absent
+        // field as false.
+        var result = Cli.Run(Fixtures.Path_(Fixtures.CleanPptx), Fixtures.Path_(Fixtures.CorruptPptx));
+
+        using var document = JsonDocument.Parse(result.Stdout);
+        foreach (var entry in document.RootElement.GetProperty("results").EnumerateArray())
+        {
+            Assert.Equal(JsonValueKind.False, entry.GetProperty("truncated").ValueKind);
+        }
+    }
+
     // ---- every input appears, with an explicit flag --------------------------------
 
     [Fact]

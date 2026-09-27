@@ -5,21 +5,25 @@
     {
       "file": "clean.docx",
       "valid": true,
+      "truncated": false,
       "errors": []
     },
     {
       "file": "clean.pptx",
       "valid": true,
+      "truncated": false,
       "errors": []
     },
     {
       "file": "clean.xlsx",
       "valid": true,
+      "truncated": false,
       "errors": []
     },
     {
       "file": "corrupt.pptx",
       "valid": false,
+      "truncated": false,
       "errors": [
         {
           "id": "PackageOpenError",
@@ -33,6 +37,7 @@
     {
       "file": "dirty.docx",
       "valid": false,
+      "truncated": false,
       "errors": [
         {
           "id": "Sch_UndeclaredAttribute",
@@ -46,6 +51,7 @@
     {
       "file": "dirty.pptx",
       "valid": false,
+      "truncated": false,
       "errors": [
         {
           "id": "Sch_UndeclaredAttribute",
@@ -59,6 +65,7 @@
     {
       "file": "dirty.xlsx",
       "valid": false,
+      "truncated": false,
       "errors": [
         {
           "id": "Sem_AttributeValueDataTypeDetailed",

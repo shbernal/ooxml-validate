@@ -55,6 +55,12 @@ export interface ValidationResult {
    */
   readonly file: string;
   readonly valid: boolean;
+  /**
+   * True when the oracle's 1000-per-file cap dropped diagnostics, so {@link errors} is
+   * a prefix of the real set rather than all of it. Do not baseline a truncated list
+   * as complete.
+   */
+  readonly truncated: boolean;
   /** Empty when {@link valid}. Capped at 1000 per file by the oracle. */
   readonly errors: readonly ValidationDiagnostic[];
 }

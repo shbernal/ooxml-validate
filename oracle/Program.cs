@@ -39,7 +39,9 @@ internal static class Program
     /// <summary>
     /// Per-file cap. A package that is broken enough to produce thousands of errors is
     /// already answered by the first few, and an uncapped run on a pathological file can
-    /// spend minutes producing output nobody reads.
+    /// spend minutes producing output nobody reads. Reaching it sets `truncated` on the
+    /// result: a capped list is a prefix of the real set, and a baseline recorded from
+    /// it can lose an entry on an SDK bump that fixed nothing.
     /// </summary>
     private const int MaxErrorsPerFile = 1_000;
 
@@ -121,20 +123,24 @@ internal static class Program
                     $"{MaxUncompressedBytes}. It was not opened.",
                     null,
                     null);
-                return new FileValidationResult(file, false, [error]);
+                return new FileValidationResult(file, false, false, [error]);
             }
 
             using var document = OpenDocument(file);
-            var validator = new OpenXmlValidator(format) { MaxNumberOfErrors = MaxErrorsPerFile };
-            var errors = validator.Validate(document)
+            // One past the cap, so "stopped at the cap" and "found exactly the cap" are
+            // distinguishable. The extra diagnostic is only a witness and is dropped.
+            var validator = new OpenXmlValidator(format) { MaxNumberOfErrors = MaxErrorsPerFile + 1 };
+            var found = validator.Validate(document)
                 .Select(ToDiagnostic)
                 .OrderBy(error => error.PartUri, StringComparer.Ordinal)
                 .ThenBy(error => error.XPath, StringComparer.Ordinal)
                 .ThenBy(error => error.Id, StringComparer.Ordinal)
                 .ThenBy(error => error.Description, StringComparer.Ordinal)
                 .ToArray();
+            var truncated = found.Length > MaxErrorsPerFile;
+            var errors = truncated ? found[..MaxErrorsPerFile] : found;
 
-            return new FileValidationResult(file, errors.Length == 0, errors);
+            return new FileValidationResult(file, errors.Length == 0, truncated, errors);
         }
         catch (Exception exception)
         {
@@ -150,7 +156,7 @@ internal static class Program
                 exception.Message,
                 null,
                 null);
-            return new FileValidationResult(file, false, [error]);
+            return new FileValidationResult(file, false, false, [error]);
         }
     }
 
@@ -295,6 +301,7 @@ internal sealed record ValidationReport(
 internal sealed record FileValidationResult(
     string File,
     bool Valid,
+    bool Truncated,
     IReadOnlyList<ValidationDiagnostic> Errors);
 
 internal sealed record ValidationDiagnostic(

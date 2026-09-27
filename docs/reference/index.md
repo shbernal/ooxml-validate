@@ -90,12 +90,12 @@ asks for, so it and `PACKAGE_VERSION` are the same number by construction.
 ## Report shape
 
 Frozen by the oracle and documented in full in `README.md`. In short:
-`{format, sdkVersion, results[{file, valid, errors[{id, type, description,
-partUri, xpath}]}]}`.
+`{format, sdkVersion, results[{file, valid, truncated, errors[{id, type,
+description, partUri, xpath}]}]}`.
 
 Every input file appears with an explicit `valid` flag; clean files are not
 omitted. `file` is echoed verbatim. Output is deterministic. Diagnostics are
-capped at 1000 per file. `type` is one of `Schema`, `Semantic`,
+capped at 1000 per file; `truncated` is `true` exactly when the cap dropped some. `type` is one of `Schema`, `Semantic`,
 `MarkupCompatibility`, `Package`, `Limit`. `Limit` means the package was not
 validated because it exceeds a bound the oracle enforces; today that is only
 `PackageTooLarge`, more than 512 MiB uncompressed as the zip directory declares it.
