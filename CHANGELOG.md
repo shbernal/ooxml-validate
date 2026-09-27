@@ -35,6 +35,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- `oracleVersion()` threw a bare `SyntaxError` when the binary printed something
+  that was not JSON. It now names the binary and shows what it printed, and checks
+  the `{tool, sdkVersion}` shape. Reports are also checked for string `format` and
+  `sdkVersion`, which used to flow out as `undefined` from a wrong binary.
 - `validateBuffer(s)` throws a `TypeError` for an `ext` that is not a bare
   extension. It went into the temp filename unchecked, so `'../../x.pptx'` could
   write the caller's bytes outside the temp directory, where cleanup never

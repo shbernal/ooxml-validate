@@ -184,14 +184,24 @@ export async function runOracle(
     report = JSON.parse(stdout) as ValidationReport;
   } catch (cause) {
     throw new Error(
-      `ooxml-validate: could not parse the oracle's output: ${stdout.slice(0, 500)}`,
+      `ooxml-validate: could not parse the output of ${binary}: ${stdout.slice(0, 500)}`,
       {cause},
     );
   }
 
-  if (!Array.isArray(report.results)) {
+  // A sanity check against the wrong binary, not a schema: the oracle and this package
+  // ship as one version. `format` and `sdkVersion` flow into the public report, where
+  // the type promises strings.
+  if (
+    typeof report !== 'object' ||
+    report === null ||
+    !Array.isArray(report.results) ||
+    typeof report.format !== 'string' ||
+    typeof report.sdkVersion !== 'string'
+  ) {
     throw new Error(
-      `ooxml-validate: the oracle returned no results array: ${stdout.slice(0, 500)}`,
+      `ooxml-validate: ${binary} did not return a {format, sdkVersion, results} report: ` +
+        stdout.slice(0, 500),
     );
   }
 
@@ -211,5 +221,28 @@ export async function oracleVersion(): Promise<{tool: string; sdkVersion: string
   if (code !== 0) {
     throw new Error(`ooxml-validate: --version failed (exit ${String(code)}).\n${stderr.trim()}`);
   }
-  return JSON.parse(stdout) as {tool: string; sdkVersion: string};
+  // Checked as carefully as a report. This is the call people make when something is
+  // already wrong, and naming the binary is what turns "bad JSON" into "that is not
+  // the oracle".
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch (cause) {
+    throw new Error(
+      `ooxml-validate: could not parse --version output from ${binary}: ${stdout.slice(0, 500)}`,
+      {cause},
+    );
+  }
+  const version = parsed as {tool?: unknown; sdkVersion?: unknown} | null;
+  if (
+    typeof version !== 'object' ||
+    version === null ||
+    typeof version.tool !== 'string' ||
+    typeof version.sdkVersion !== 'string'
+  ) {
+    throw new Error(
+      `ooxml-validate: ${binary} did not report a {tool, sdkVersion} pair: ${stdout.slice(0, 500)}`,
+    );
+  }
+  return {tool: version.tool, sdkVersion: version.sdkVersion};
 }

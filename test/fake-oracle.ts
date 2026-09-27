@@ -10,6 +10,9 @@
 //                                      makes it invalid
 //                     exit2          — refuse to run
 //                     garbage        — print something that is not JSON
+//                     misshapen      — valid JSON of the wrong shape: a numeric
+//                                      sdkVersion, or a version report with no
+//                                      sdkVersion
 //                     drop           — leave the first path out of the report
 //                     rename         — report every path under a name nobody sent
 //                     reverse        — report in the opposite order to the input
@@ -28,8 +31,12 @@ import {appendFileSync, existsSync, readFileSync} from 'node:fs';
 
 const args = process.argv.slice(2);
 
+const mode = process.env.FAKE_ORACLE_MODE ?? 'echo';
+
 if (args.includes('--version')) {
-  process.stdout.write(`${JSON.stringify({tool: 'fake', sdkVersion: '0.0.0'})}\n`);
+  if (mode === 'garbage') process.stdout.write('this is not json\n');
+  else if (mode === 'misshapen') process.stdout.write(`${JSON.stringify({tool: 'fake'})}\n`);
+  else process.stdout.write(`${JSON.stringify({tool: 'fake', sdkVersion: '0.0.0'})}\n`);
   process.exit(0);
 }
 
@@ -46,8 +53,6 @@ if (args.includes('--files-from')) {
       .filter((line) => line !== ''),
   );
 }
-const mode = process.env.FAKE_ORACLE_MODE ?? 'echo';
-
 if (process.env.FAKE_ORACLE_LOG) {
   const heapLimit = process.env.DOTNET_GCHeapHardLimit;
   appendFileSync(process.env.FAKE_ORACLE_LOG, `${JSON.stringify({args, paths, heapLimit})}\n`);
@@ -79,6 +84,12 @@ function report(): void {
   if (mode === 'fail-batch' && paths.length > 1) refuse('fake oracle: batch refused');
   if (mode === 'garbage') {
     process.stdout.write('this is not json\n');
+    process.exit(0);
+  }
+  if (mode === 'misshapen') {
+    process.stdout.write(
+      `${JSON.stringify({format: 'Microsoft365', sdkVersion: 3, results: []})}\n`,
+    );
     process.exit(0);
   }
 

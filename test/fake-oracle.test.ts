@@ -133,9 +133,33 @@ describe('failures', {skip}, () => {
     await assert.rejects(validate(['/in/clean.pptx']), /exit 2[\s\S]*told to fail/);
   });
 
-  test('output that is not JSON is an error, not an empty report', async () => {
+  test('output that is not JSON is an error naming the binary, not an empty report', async () => {
     mode('garbage');
-    await assert.rejects(validate(['/in/clean.pptx']), /could not parse the oracle's output/);
+    await assert.rejects(
+      validate(['/in/clean.pptx']),
+      new RegExp(`could not parse the output of ${FAKE}[\\s\\S]*this is not json`),
+    );
+  });
+
+  test('a report of the wrong shape is refused, not passed on', async () => {
+    mode('misshapen');
+    await assert.rejects(
+      validate(['/in/clean.pptx']),
+      /did not return a \{format, sdkVersion, results\}/,
+    );
+  });
+
+  test('oracleVersion names the binary when its output is not a version report', async () => {
+    mode('garbage');
+    await assert.rejects(
+      oracleVersion(),
+      (error: unknown) =>
+        !(error instanceof SyntaxError) &&
+        String(error).includes(`could not parse --version output from ${FAKE}`),
+    );
+
+    mode('misshapen');
+    await assert.rejects(oracleVersion(), /did not report a \{tool, sdkVersion\} pair/);
   });
 
   test('a path missing from the report is an error, never a clean file', async () => {
