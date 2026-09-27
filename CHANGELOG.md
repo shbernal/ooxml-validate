@@ -11,8 +11,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- `OOXML_VALIDATE_TIMEOUT_MS` bounds each oracle invocation (default two
+  minutes). A child that runs past it is killed with SIGKILL and the call rejects
+  with an error naming the file.
+
 ### Fixed
 
+- An oracle process that never exited used to hang its caller and every later
+  call in the same Node process, since the queue runs one invocation at a time.
+  It is now killed at the time limit, and the queue carries on. The stdout cap
+  also kills with SIGKILL now, so a child ignoring SIGTERM cannot outlast it.
 - `validate()` rejects a path containing a line break with an error naming it.
   The path list travels one path per line, so such a path used to arrive as two:
   either a failure blamed on a fragment nobody submitted, or two other files

@@ -44,6 +44,7 @@ Diagnostics go to stdout as JSON. Tool failures go to stderr as text.
 |---|---|
 | `OOXML_VALIDATE_BIN` | Use this binary instead of resolving one. |
 | `OOXML_VALIDATE_NO_BATCH` | Disable batching, so a failure pins to one input. |
+| `OOXML_VALIDATE_TIMEOUT_MS` | Time limit for one oracle invocation, default `120000`. Exceeding it kills the child with SIGKILL. |
 | `OOXML_VALIDATE_CACHE_DIR` | Override the download cache location. |
 | `OOXML_VALIDATE_NO_DOWNLOAD` | Never fetch; fail if not already cached. |
 | `OOXML_VALIDATE_FROM_SOURCE` | Build the oracle from source. Needs an SDK and a checkout. |

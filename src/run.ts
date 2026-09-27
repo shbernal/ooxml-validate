@@ -14,6 +14,23 @@ import type {FileFormat, ValidationReport} from './types.ts';
  */
 const MAX_STDOUT = 128 * 1024 * 1024;
 
+/** Override the per-invocation time limit, in milliseconds. */
+const TIMEOUT = 'OOXML_VALIDATE_TIMEOUT_MS';
+
+const DEFAULT_TIMEOUT_MS = 120_000;
+
+function timeoutMs(): number {
+  const raw = process.env[TIMEOUT];
+  if (raw === undefined || raw === '') return DEFAULT_TIMEOUT_MS;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error(
+      `ooxml-validate: ${TIMEOUT} must be a positive number of milliseconds, got ${raw}.`,
+    );
+  }
+  return value;
+}
+
 function childEnv(): NodeJS.ProcessEnv {
   return {
     ...process.env,
@@ -38,13 +55,31 @@ interface OracleRun {
  * ARG_MAX, and that failure would surface as an exec error the oracle never sees and
  * cannot explain.
  */
-function spawnOracle(binary: string, args: readonly string[], stdin: string): Promise<OracleRun> {
+/**
+ * The child is time-bound because the queue in batch.ts holds one invocation at a
+ * time: a child that never exits would leave every later caller in the process
+ * waiting on it forever. Both the time limit and the stdout cap use SIGKILL — a bound
+ * the child can decline by ignoring SIGTERM is not a bound.
+ */
+function spawnOracle(
+  binary: string,
+  args: readonly string[],
+  stdin: string,
+  subject: string,
+): Promise<OracleRun> {
+  const limit = timeoutMs();
   return new Promise((resolve, reject) => {
     const child = spawn(binary, args, {env: childEnv(), stdio: ['pipe', 'pipe', 'pipe']});
 
     let stdout = '';
     let stderr = '';
     let overflowed = false;
+    let timedOut = false;
+
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGKILL');
+    }, limit);
 
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
@@ -52,7 +87,7 @@ function spawnOracle(binary: string, args: readonly string[], stdin: string): Pr
     child.stdout.on('data', (chunk: string) => {
       if (stdout.length + chunk.length > MAX_STDOUT) {
         overflowed = true;
-        child.kill();
+        child.kill('SIGKILL');
         return;
       }
       stdout += chunk;
@@ -61,8 +96,21 @@ function spawnOracle(binary: string, args: readonly string[], stdin: string): Pr
       stderr += chunk;
     });
 
-    child.on('error', reject);
+    child.on('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
     child.on('close', (code) => {
+      clearTimeout(timer);
+      if (timedOut) {
+        reject(
+          new Error(
+            `ooxml-validate: the oracle did not finish ${subject} within ${limit} ms and was ` +
+              `killed. Raise ${TIMEOUT} if that is legitimately too short.`,
+          ),
+        );
+        return;
+      }
       if (overflowed) {
         reject(new Error(`ooxml-validate: the oracle produced more than ${MAX_STDOUT} bytes.`));
         return;
@@ -112,7 +160,9 @@ export async function runOracle(
   // The format is always passed explicitly. Inheriting a default is how two consumers
   // end up validating against different rule sets.
   const args = ['--format', format, '--files-from', '-'];
-  const {code, stdout, stderr} = await spawnOracle(binary, args, `${paths.join('\n')}\n`);
+  const subject =
+    paths.length === 1 ? `validating ${paths[0]}` : `a batch of ${paths.length} files`;
+  const {code, stdout, stderr} = await spawnOracle(binary, args, `${paths.join('\n')}\n`, subject);
 
   if (code !== 0 && code !== 1) {
     throw new Error(`ooxml-validate: the oracle failed (exit ${String(code)}).\n${stderr.trim()}`);
@@ -140,7 +190,12 @@ export async function runOracle(
 /** The oracle's own version and the Open XML SDK it links. */
 export async function oracleVersion(): Promise<{tool: string; sdkVersion: string}> {
   const binary = await resolveValidator();
-  const {code, stdout, stderr} = await spawnOracle(binary, ['--version'], '');
+  const {code, stdout, stderr} = await spawnOracle(
+    binary,
+    ['--version'],
+    '',
+    'reporting its version',
+  );
 
   if (code !== 0) {
     throw new Error(`ooxml-validate: --version failed (exit ${String(code)}).\n${stderr.trim()}`);

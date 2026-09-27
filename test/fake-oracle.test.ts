@@ -52,6 +52,7 @@ beforeEach(() => {
   rmSync(LOG, {force: true});
   delete process.env.FAKE_ORACLE_MODE;
   delete process.env.OOXML_VALIDATE_NO_BATCH;
+  delete process.env.OOXML_VALIDATE_TIMEOUT_MS;
   resetResolution();
 });
 
@@ -154,6 +155,36 @@ describe('failures', {skip}, () => {
 
     const sent = invocations().flatMap((call) => call.paths);
     assert.ok(!sent.includes('/in/a.pptx') && !sent.includes('/in/b.pptx'));
+  });
+
+  test('a child that never exits is killed, and each caller hears about its own file', async () => {
+    // The fake ignores SIGTERM, so this also proves the kill is not one it can decline.
+    mode('hang');
+    process.env.OOXML_VALIDATE_TIMEOUT_MS = '300';
+
+    const outcomes = await Promise.allSettled([
+      validate(['/in/clean-a.pptx']),
+      validate(['/in/clean-b.pptx']),
+    ]);
+
+    assert.match(
+      String((outcomes[0] as PromiseRejectedResult).reason),
+      /clean-a\.pptx within 300 ms/,
+    );
+    assert.match(
+      String((outcomes[1] as PromiseRejectedResult).reason),
+      /clean-b\.pptx within 300 ms/,
+    );
+
+    // And the queue is not left wedged behind it.
+    mode('echo');
+    const report = await validate(['/in/clean-c.pptx']);
+    assert.equal(report.results[0]?.valid, true);
+  });
+
+  test('a time limit that is not a positive number is refused', async () => {
+    process.env.OOXML_VALIDATE_TIMEOUT_MS = 'soon';
+    await assert.rejects(validate(['/in/clean.pptx']), /must be a positive number/);
   });
 
   test('a failed batch is retried one file per process', async () => {

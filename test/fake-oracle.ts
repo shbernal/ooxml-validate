@@ -14,6 +14,7 @@
 //                     rename         — report every path under a name nobody sent
 //                     reverse        — report in the opposite order to the input
 //                     fail-batch     — exit 2 when given more than one path
+//                     hang           — never exit, and ignore SIGTERM
 //   FAKE_ORACLE_LOG   if set, one JSON line per invocation is appended here
 
 import {appendFileSync, readFileSync} from 'node:fs';
@@ -40,35 +41,44 @@ function refuse(message: string): never {
   process.exit(2);
 }
 
-if (mode === 'exit2') refuse('fake oracle: told to fail');
-if (mode === 'fail-batch' && paths.length > 1) refuse('fake oracle: batch refused');
-if (mode === 'garbage') {
-  process.stdout.write('this is not json\n');
-  process.exit(0);
+if (mode === 'hang') {
+  process.on('SIGTERM', () => {});
+  setInterval(() => {}, 60_000);
+} else {
+  report();
 }
 
-let reported = paths;
-if (mode === 'drop') reported = paths.slice(1);
-if (mode === 'rename') reported = paths.map((path) => `${path}.unsubmitted`);
-if (mode === 'reverse') reported = [...paths].reverse();
+function report(): void {
+  if (mode === 'exit2') refuse('fake oracle: told to fail');
+  if (mode === 'fail-batch' && paths.length > 1) refuse('fake oracle: batch refused');
+  if (mode === 'garbage') {
+    process.stdout.write('this is not json\n');
+    process.exit(0);
+  }
 
-const results = reported.map((file) =>
-  file.includes('dirty')
-    ? {
-        file,
-        valid: false,
-        errors: [
-          {
-            id: 'Sch_Fake',
-            type: 'Schema',
-            description: 'fake diagnostic',
-            partUri: '/fake.xml',
-            xpath: '/fake[1]',
-          },
-        ],
-      }
-    : {file, valid: true, errors: []},
-);
+  let reported = paths;
+  if (mode === 'drop') reported = paths.slice(1);
+  if (mode === 'rename') reported = paths.map((path) => `${path}.unsubmitted`);
+  if (mode === 'reverse') reported = [...paths].reverse();
 
-process.stdout.write(`${JSON.stringify({format, sdkVersion: '0.0.0', results})}\n`);
-process.exit(results.some((result) => !result.valid) ? 1 : 0);
+  const results = reported.map((file) =>
+    file.includes('dirty')
+      ? {
+          file,
+          valid: false,
+          errors: [
+            {
+              id: 'Sch_Fake',
+              type: 'Schema',
+              description: 'fake diagnostic',
+              partUri: '/fake.xml',
+              xpath: '/fake[1]',
+            },
+          ],
+        }
+      : {file, valid: true, errors: []},
+  );
+
+  process.stdout.write(`${JSON.stringify({format, sdkVersion: '0.0.0', results})}\n`);
+  process.exit(results.some((result) => !result.valid) ? 1 : 0);
+}

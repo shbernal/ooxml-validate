@@ -74,7 +74,8 @@ caller ──▶ validate() / validateBuffer(s)()
               ├─ resolve binary:  env override → cache → source build → fail
               ├─ batch:           queue drains through --files-from, MAX_BATCH=32,
               │                   at most one child process per Node process
-              ├─ spawn oracle ──▶ JSON report on stdout, exit 0/1/2
+              ├─ spawn oracle ──▶ JSON report on stdout, exit 0/1/2;
+              │                   killed at OOXML_VALIDATE_TIMEOUT_MS
               └─ rewrite `file` through the temp-path map, return
 ```
 

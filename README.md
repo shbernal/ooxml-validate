@@ -166,6 +166,7 @@ older Office version sees a document.
 |---|---|
 | `OOXML_VALIDATE_BIN` | Use this binary instead of resolving one. For bisecting against another build. |
 | `OOXML_VALIDATE_NO_BATCH` | Disable batching, so a failure pins to one input. |
+| `OOXML_VALIDATE_TIMEOUT_MS` | Time limit for one oracle invocation (default `120000`). A child that exceeds it is killed and the call rejects. |
 | `OOXML_VALIDATE_CACHE_DIR` | Override where downloaded binaries are cached. |
 | `OOXML_VALIDATE_NO_DOWNLOAD` | Never fetch; fail if the binary is not already cached. |
 | `OOXML_VALIDATE_FROM_SOURCE` | Build the oracle from source. Needs a .NET SDK and a checkout of this repo. |

@@ -56,7 +56,16 @@ function scheduleFlush(): void {
   flushScheduled = true;
   setTimeout(() => {
     flushScheduled = false;
-    void flush();
+    // flush() is written not to reject. If it ever does, every queued caller must
+    // still hear about it: an unhandled rejection here would leave them waiting on
+    // promises nothing will settle, and leave the queue marked busy for good.
+    flush().catch((error: unknown) => {
+      const failed = queue;
+      queue = [];
+      inFlight = false;
+      const reason = error instanceof Error ? error : new Error(String(error));
+      for (const item of failed) item.reject(reason);
+    });
   }, 0);
 }
 
@@ -79,6 +88,12 @@ async function flush(): Promise<void> {
 
   try {
     await runBatch(batch, format);
+  } catch (error) {
+    // runBatch settles every item itself on every path it expects. Anything it did
+    // not expect must still reach the callers; settling an already-settled item is
+    // a no-op.
+    const reason = error instanceof Error ? error : new Error(String(error));
+    for (const item of batch) item.reject(reason);
   } finally {
     inFlight = false;
     if (queue.length > 0) scheduleFlush();
