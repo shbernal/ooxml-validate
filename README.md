@@ -47,6 +47,12 @@ As a library:
 | `probeFormats(paths)` | Error counts at every conformance target. |
 | `oracleVersion()` | The oracle's version and the Open XML SDK it links. |
 | `FILE_FORMATS` / `FILE_FORMAT` | Conformance targets, and the pinned default. |
+| `isFileFormat(value)` | Whether a string names a conformance target, as a type guard. |
+| `resolveValidator()` | The binary's path, downloading it once if needed. Throws if it cannot be obtained. |
+| `validatorPath()` | Same, but `null` instead of throwing. |
+| `currentPlatform()` / `SUPPORTED_PLATFORMS` | This host's platform id (`null` if unsupported), and all of them. |
+| `cacheRoot()` | Where downloaded binaries are cached. |
+| `PACKAGE_NAME` / `PACKAGE_VERSION` / `RELEASE_TAG` | This package's name and version, and the release its binary comes from. |
 
 Validating in-memory packages needs no temp-file bookkeeping from you:
 

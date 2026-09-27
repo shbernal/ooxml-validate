@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {afterEach, test} from 'node:test';
+import {fileURLToPath} from 'node:url';
 
 import {resetNotice, validatorAvailable} from '../src/gate.ts';
 import {resetResolution} from '../src/resolve.ts';
@@ -92,5 +93,20 @@ test('a failed resolution is not memoized', async () => {
 
     process.env.OOXML_VALIDATE_BIN = '/nonexistent/two';
     await assert.rejects(resolveValidator(), /nonexistent\/two/);
+  });
+});
+
+test('validatorPath is null, not a throw, when the binary cannot be obtained', async () => {
+  await withEnv({CI: '1', OOXML_VALIDATE_BIN: '/nonexistent/ooxml-validate'}, async () => {
+    const {validatorPath} = await import('../src/resolve.ts');
+    assert.equal(await validatorPath(), null);
+  });
+});
+
+test('validatorPath returns the resolved binary', async () => {
+  const fake = fileURLToPath(new URL('fake-oracle.ts', import.meta.url));
+  await withEnv({OOXML_VALIDATE_BIN: fake}, async () => {
+    const {validatorPath} = await import('../src/resolve.ts');
+    assert.equal(await validatorPath(), fake);
   });
 });
