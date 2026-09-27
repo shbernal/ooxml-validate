@@ -11,6 +11,13 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Fixed
+
+- `validate()` rejects a path containing a line break with an error naming it.
+  The path list travels one path per line, so such a path used to arrive as two:
+  either a failure blamed on a fragment nobody submitted, or two other files
+  validated in its place. The other files in the same batch are unaffected.
+
 ## [0.0.3] — 2026-08-15
 
 ### Fixed

@@ -137,7 +137,9 @@ Errors are capped at 1000 per file.
 Pass `--files-from <path>` to read newline-delimited paths from a file, or
 `--files-from -` to read them from stdin. It composes with explicit path
 arguments. This is how large corpora are validated without hitting `ARG_MAX`;
-duplicate paths collapse to one result.
+duplicate paths collapse to one result. A line is a path, so a path containing a
+line break cannot be expressed; the Node API rejects one with an error naming it
+rather than sending it.
 
 ### Running it through a package script
 

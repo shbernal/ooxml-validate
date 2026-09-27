@@ -132,6 +132,30 @@ describe('failures', {skip}, () => {
     );
   });
 
+  test('a path with a line break is refused, and only that path', async () => {
+    // Both halves name plausible files: sent as-is, the oracle would validate two
+    // packages nobody asked about and the caller would get an internal error.
+    const outcomes = await Promise.allSettled([
+      validate(['/in/clean-1.pptx']),
+      validate(['/in/a.pptx\n/in/b.pptx']),
+      validate(['/in/clean-2.pptx\r']),
+      validate(['/in/dirty-3.pptx']),
+    ]);
+
+    assert.deepEqual(
+      outcomes.map((outcome) => outcome.status),
+      ['fulfilled', 'rejected', 'rejected', 'fulfilled'],
+    );
+    for (const outcome of outcomes) {
+      if (outcome.status === 'rejected') {
+        assert.match(String(outcome.reason), /contains a line break/);
+      }
+    }
+
+    const sent = invocations().flatMap((call) => call.paths);
+    assert.ok(!sent.includes('/in/a.pptx') && !sent.includes('/in/b.pptx'));
+  });
+
   test('a failed batch is retried one file per process', async () => {
     mode('fail-batch');
     const paths = ['/in/clean-1.pptx', '/in/dirty-2.pptx', '/in/clean-3.pptx'];

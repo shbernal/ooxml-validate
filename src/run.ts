@@ -94,6 +94,19 @@ export async function runOracle(
     throw new Error('ooxml-validate: runOracle called with no paths.');
   }
 
+  // The list goes over the wire one path per line, so a path with a line break in it
+  // arrives as two paths. That is either a failure blamed on a fragment nobody
+  // submitted or, worse, two real files validated in place of the one asked for.
+  // Refused here, at the one place every batch passes through, rather than by
+  // changing the delimiter: a line is a path is the documented contract.
+  for (const path of paths) {
+    if (path.includes('\n') || path.includes('\r')) {
+      throw new Error(
+        `ooxml-validate: path contains a line break, which --files-from cannot carry: ${JSON.stringify(path)}`,
+      );
+    }
+  }
+
   const binary = await resolveValidator();
 
   // The format is always passed explicitly. Inheriting a default is how two consumers
