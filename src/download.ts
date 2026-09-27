@@ -38,6 +38,12 @@ export interface DownloadOptions {
   readonly platform?: PlatformId;
   /** Called with human-readable progress notes. Defaults to writing to stderr. */
   readonly onProgress?: (message: string) => void;
+  /**
+   * Where release assets are fetched from. A test seam, deliberately not an
+   * environment variable: repointing the download is not a knob to hand anyone who
+   * can set one.
+   */
+  readonly releaseBase?: string;
 }
 
 function defaultProgress(message: string): void {
@@ -185,6 +191,7 @@ export async function downloadBinary(options: DownloadOptions): Promise<string> 
   const platform = options.platform ?? requirePlatform();
   const onProgress = options.onProgress ?? defaultProgress;
   const {version} = options;
+  const releaseBase = options.releaseBase ?? RELEASE_BASE;
 
   const asset = assetName(platform);
   const tag = `v${version}`;
@@ -195,8 +202,8 @@ export async function downloadBinary(options: DownloadOptions): Promise<string> 
     onProgress(`fetching ${asset} ${tag} (~40 MB, once per version)`);
 
     const [archiveResponse, sumsResponse] = await Promise.all([
-      fetchOrThrow(`${RELEASE_BASE}/${tag}/${asset}`),
-      fetchOrThrow(`${RELEASE_BASE}/${tag}/SHA256SUMS`),
+      fetchOrThrow(`${releaseBase}/${tag}/${asset}`),
+      fetchOrThrow(`${releaseBase}/${tag}/SHA256SUMS`),
     ]);
 
     const archiveBytes = new Uint8Array(await archiveResponse.arrayBuffer());
@@ -216,6 +223,8 @@ export async function downloadBinary(options: DownloadOptions): Promise<string> 
     const archivePath = join(staging, asset);
     await writeFile(archivePath, archiveBytes);
 
+    // Before extraction, and load-bearing: an archive whose origin is unproven never
+    // reaches `tar`.
     await verifyAttestation(archivePath, onProgress);
 
     const extractedInto = join(staging, 'unpacked');
