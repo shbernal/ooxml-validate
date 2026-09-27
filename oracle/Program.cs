@@ -142,6 +142,14 @@ internal static class Program
 
             return new FileValidationResult(file, errors.Length == 0, truncated, errors);
         }
+        catch (CliException)
+        {
+            // A CliException means the tool was used wrongly, which is exit 2 wherever it
+            // is thrown. Caught below it would become a finding about the file, exit 1.
+            // Parse rejects unsupported extensions before any file is opened, so nothing
+            // throws one here today; this keeps the type's meaning if that changes.
+            throw;
+        }
         catch (Exception exception)
         {
             // A package that will not open is a finding about that package, not a
