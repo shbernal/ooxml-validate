@@ -48,7 +48,15 @@ as a mystery failure in a consumer repo.
    in the PR.
 5. Merge only once the delta is accounted for.
 
-CI runs steps 3 and 5's check; step 4 is a human. Renovate labels these PRs
+CI runs steps 3 and 5's check; step 4 is a human.
+
+One property a bump can move that the snapshot cannot show: the oracle is safe
+against entity-expansion and external-entity attacks only because the SDK's XML
+reader refuses DTDs. Nothing in this repo sets that. `XmlHardeningTests` pins it
+by building both attacks and asserting the refusal message, and that the entity's
+target never appears in the output. If a bump turns those red, that is a security
+regression to fix before merging, not a baseline change to record. The same tests
+apply to any check added here that parses package XML itself. Renovate labels these PRs
 `baseline-moving` and never groups or automerges them, so they cannot ride along
 in a batch nobody reads closely.
 
