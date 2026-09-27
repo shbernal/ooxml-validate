@@ -4,7 +4,7 @@ import {mkdtemp, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
-import {enqueue} from './batch.ts';
+import {type BatchedResult, enqueue} from './batch.ts';
 import {FILE_FORMAT} from './formats.ts';
 import type {
   BufferInput,
@@ -79,7 +79,9 @@ export async function validateBuffer(
  * than by submission.
  *
  * Temp files are unique per buffer even within one batch, and cleanup happens in a
- * `finally`, so an oracle crash mid-batch cannot leak them.
+ * `finally` that runs only once every input has settled, so an oracle crash mid-batch
+ * cannot leak them and one input's failure cannot delete files its siblings are still
+ * waiting to have read.
  */
 export async function validateBuffers(
   inputs: readonly BufferInput[],
@@ -107,7 +109,15 @@ export async function validateBuffers(
       }),
     );
 
-    const batched = await Promise.all(written.map((path) => enqueue(path, format)));
+    // allSettled, not all: the directory is removed in the `finally` below, and
+    // Promise.all would reach it on the first rejection while sibling inputs are still
+    // queued or in flight. Their files would vanish under them, and the batch they
+    // share with other callers would fail on "does not exist". The first rejection is
+    // still what the caller sees; it just waits until nothing reads the files.
+    const settled = await Promise.allSettled(written.map((path) => enqueue(path, format)));
+    const failure = settled.find((entry) => entry.status === 'rejected');
+    if (failure) throw failure.reason;
+    const batched = settled.map((entry) => (entry as PromiseFulfilledResult<BatchedResult>).value);
 
     return batched.map((entry) => {
       const label = identities.get(entry.result.file);

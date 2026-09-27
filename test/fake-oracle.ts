@@ -15,9 +15,12 @@
 //                     reverse        — report in the opposite order to the input
 //                     fail-batch     — exit 2 when given more than one path
 //                     hang           — never exit, and ignore SIGTERM
+//                     strict         — like echo, but exit 2 on a path that does not
+//                                      exist or is not .pptx/.xlsx/.docx, as the
+//                                      real oracle does
 //   FAKE_ORACLE_LOG   if set, one JSON line per invocation is appended here
 
-import {appendFileSync, readFileSync} from 'node:fs';
+import {appendFileSync, existsSync, readFileSync} from 'node:fs';
 
 const args = process.argv.slice(2);
 
@@ -51,6 +54,12 @@ if (mode === 'hang') {
 
 function report(): void {
   if (mode === 'exit2') refuse('fake oracle: told to fail');
+  if (mode === 'strict') {
+    for (const path of paths) {
+      if (!/\.(pptx|xlsx|docx)$/.test(path)) refuse(`Unsupported file extension: ${path}`);
+      if (!existsSync(path)) refuse(`File does not exist: ${path}`);
+    }
+  }
   if (mode === 'fail-batch' && paths.length > 1) refuse('fake oracle: batch refused');
   if (mode === 'garbage') {
     process.stdout.write('this is not json\n');

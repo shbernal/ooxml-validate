@@ -27,6 +27,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- `validateBuffers` no longer deletes its temp files while some of its inputs are
+  still queued. When one input failed, its siblings' files used to vanish before
+  they were read, failing the batch they shared with other callers and sending
+  everyone in it through the slow one-file-per-process retry.
+
 - An oracle process that never exited used to hang its caller and every later
   call in the same Node process, since the queue runs one invocation at a time.
   It is now killed at the time limit, and the queue carries on. The stdout cap

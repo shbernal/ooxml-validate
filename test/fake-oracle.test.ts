@@ -276,6 +276,22 @@ describe('buffers', {skip}, () => {
     assert.ok(sent[2]?.endsWith('.docx'));
   });
 
+  test('one input failing does not delete files its siblings are still queued on', async () => {
+    // 40 inputs make two batches. The first fails as a whole on input 0, is retried
+    // one by one, and input 0's rejection arrives while the second batch is still
+    // queued. That batch must still find its files.
+    mode('strict');
+    const inputs = Array.from({length: 40}, (_, index) => ({
+      bytes: new Uint8Array([index]),
+      ext: index === 0 ? 'bin' : 'pptx',
+    }));
+
+    await assert.rejects(validateBuffers(inputs), /Unsupported file extension/);
+
+    const sizes = invocations().map((call) => call.paths.length);
+    assert.deepEqual(sizes, [32, ...Array.from({length: 32}, () => 1), 8]);
+  });
+
   test('temp files are removed, on success and on failure', async () => {
     const stray = (): string[] =>
       readdirSync(scratch).filter((entry) => entry.startsWith('ooxml-validate-'));
