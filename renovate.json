@@ -36,6 +36,11 @@
       "schedule": ["before 6am on the first day of the month"]
     },
     {
+      "description": "@types/node describes the oldest Node this package supports, not the newest. Its major tracks Node's, and engines.node (with .nvmrc) is >=24: typechecking against a later major lets tsc accept APIs a supported runtime does not have. Raise this together with engines.node and .nvmrc, as a deliberate breaking change, never on its own.",
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<25"
+    },
+    {
       "description": "Group all @types/* devDependencies together.",
       "matchPackageNames": ["@types/**"],
       "groupName": "type definitions"

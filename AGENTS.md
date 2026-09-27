@@ -54,7 +54,10 @@ definition of "everything" and it lives in `package.json`.
 
 ## Conventions
 
-- ESM only, `"type": "module"`, Node >= 24.
+- ESM only, `"type": "module"`, Node >= 24. `@types/node` is held at the same
+  major as that floor (a Renovate rule enforces it), so `tsc` rejects APIs a
+  supported runtime lacks. `engines.node`, `.nvmrc` and the `@types/node` major
+  move together or not at all.
 - Node 24 runs the `.ts` sources directly via type-stripping, so there is **no
   build step in the dev loop**. Relative imports therefore carry a `.ts`
   extension; `rewriteRelativeImportExtensions` turns them into `.js` on the way

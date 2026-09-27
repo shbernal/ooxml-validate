@@ -70,7 +70,7 @@
   ],
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
-    "@types/node": "^26.6.2",
+    "@types/node": "^24.19.0",
     "lefthook": "^2.1.14",
     "typescript": "^7.0.2"
   }
