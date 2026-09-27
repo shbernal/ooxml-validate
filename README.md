@@ -130,6 +130,15 @@ argument order produce byte-identical stdout.
 validated, and the exit code is `1`. A path that names nothing readable is a
 different thing entirely and exits `2`.
 
+**A package too large to validate safely is refused unopened.** If its zip
+directory declares more than 512 MiB uncompressed, it gets one diagnostic,
+`PackageTooLarge` of type `Limit`, and exit `1`. No real Office document comes
+near that; a few megabytes of zip that inflate to gigabytes do. The npm package
+also runs the oracle under a 3 GiB managed-heap ceiling (`DOTNET_GCHeapHardLimit`,
+which you can set yourself to override it), so a package that understates its own
+size ends as a `PackageOpenError` on that file instead of an out-of-memory kill of
+the whole batch.
+
 Errors are capped at 1000 per file.
 
 ### Batching

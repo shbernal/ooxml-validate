@@ -33,7 +33,8 @@ const paths = readFileSync(0, 'utf8')
 const mode = process.env.FAKE_ORACLE_MODE ?? 'echo';
 
 if (process.env.FAKE_ORACLE_LOG) {
-  appendFileSync(process.env.FAKE_ORACLE_LOG, `${JSON.stringify({args, paths})}\n`);
+  const heapLimit = process.env.DOTNET_GCHeapHardLimit;
+  appendFileSync(process.env.FAKE_ORACLE_LOG, `${JSON.stringify({args, paths, heapLimit})}\n`);
 }
 
 function refuse(message: string): never {

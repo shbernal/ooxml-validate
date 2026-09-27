@@ -31,13 +31,24 @@ function timeoutMs(): number {
   return value;
 }
 
-function childEnv(): NodeJS.ProcessEnv {
+/**
+ * The oracle's environment. Shared with the CLI, so the command and the API run the
+ * same binary under the same bounds. Each default yields to a value already set.
+ */
+export function childEnv(): NodeJS.ProcessEnv {
   return {
     ...process.env,
     // The release binary is a self-contained single-file app: it extracts its bundle
     // on first run, and with no base directory set it picks one that is not always
     // writable. Defaulted here rather than left to the environment.
     DOTNET_BUNDLE_EXTRACT_BASE_DIR: process.env.DOTNET_BUNDLE_EXTRACT_BASE_DIR ?? tmpdir(),
+    // A 3 GiB managed-heap ceiling, in the hex .NET expects. The oracle refuses a
+    // package whose zip directory declares more than 512 MiB uncompressed, but the
+    // directory can lie. Under this ceiling a package that inflates past what it
+    // declared hits an OutOfMemoryException, which the oracle reports as a finding on
+    // that one file; without it, the kernel's OOM-killer ends the whole batch with no
+    // report. High enough that no package under the declared cap needs more.
+    DOTNET_GCHeapHardLimit: process.env.DOTNET_GCHeapHardLimit ?? '0xC0000000',
   };
 }
 

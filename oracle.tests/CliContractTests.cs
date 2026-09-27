@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text.Json;
 
 namespace OoxmlValidate.Tests;
@@ -183,6 +184,39 @@ public sealed class CliContractTests
         Assert.Equal(3, report.Results.Count);
         Assert.Equal(2, report.Results.Count(r => r.Valid));
         Assert.Single(report.Results, r => !r.Valid);
+    }
+
+    [Fact]
+    public void OversizedPackage_IsRefusedUnopened_AndDoesNotLoseItsNeighbours()
+    {
+        // A package whose parts inflate past the cap. Built here rather than committed:
+        // the fixture corpus is the diagnostic baseline, and this is not a document.
+        // Zeros compress to almost nothing, so the file on disk stays small.
+        using var temp = new TempDirectory();
+        var bomb = System.IO.Path.Combine(temp.Path, "bomb.pptx");
+        using (var archive = ZipFile.Open(bomb, ZipArchiveMode.Create))
+        {
+            var entry = archive.CreateEntry("ppt/slides/slide1.xml", CompressionLevel.Fastest);
+            using var stream = entry.Open();
+            var zeros = new byte[1024 * 1024];
+            for (var written = 0; written < 520; written += 1)
+            {
+                stream.Write(zeros);
+            }
+        }
+
+        var result = Cli.Run(bomb, Fixtures.Path_(Fixtures.CleanXlsx));
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stderr);
+
+        var report = Report.Parse(result.Stdout);
+        var refused = report.Results.Single(r => r.File == bomb);
+        Assert.False(refused.Valid);
+        Assert.Equal("PackageTooLarge", refused.Errors.Single().Id);
+        Assert.Equal("Limit", refused.Errors.Single().Type);
+        Assert.Contains("545259520", refused.Errors.Single().Description, StringComparison.Ordinal);
+        Assert.True(report.Results.Single(r => r.File != bomb).Valid);
     }
 
     // ---- every input appears, with an explicit flag --------------------------------

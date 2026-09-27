@@ -16,6 +16,14 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `OOXML_VALIDATE_TIMEOUT_MS` bounds each oracle invocation (default two
   minutes). A child that runs past it is killed with SIGKILL and the call rejects
   with an error naming the file.
+- A package whose zip directory declares more than 512 MiB uncompressed is
+  refused without being opened, with a `PackageTooLarge` diagnostic of the new
+  type `Limit`. A 2 MB package inflating to 2 GB used to drive the oracle past
+  4 GB of RSS.
+- The oracle now runs under a 3 GiB managed-heap ceiling, from both the API and
+  the `ooxml-validate` command. A package that inflates past what it declares
+  fails as a `PackageOpenError` on that one file rather than getting the whole
+  process OOM-killed. An existing `DOTNET_GCHeapHardLimit` is respected.
 
 ### Fixed
 

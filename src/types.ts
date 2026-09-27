@@ -27,7 +27,12 @@ export type DiagnosticType =
   /** An `mc:` markup-compatibility construct is malformed. */
   | 'MarkupCompatibility'
   /** The package itself could not be opened or is structurally wrong. */
-  | 'Package';
+  | 'Package'
+  /**
+   * The package exceeds a resource bound the oracle enforces, and was not validated.
+   * Currently only `PackageTooLarge`: more than 512 MiB uncompressed, as declared.
+   */
+  | 'Limit';
 
 export interface ValidationDiagnostic {
   /**

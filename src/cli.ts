@@ -10,9 +10,9 @@
 // binary, which is exactly what a consumer should not have to do by hand.
 
 import {spawn} from 'node:child_process';
-import {tmpdir} from 'node:os';
 
 import {resolveValidator} from './resolve.ts';
+import {childEnv} from './run.ts';
 
 const TOOL_FAILURE = 2;
 
@@ -28,10 +28,7 @@ async function main(): Promise<void> {
 
   const child = spawn(binary, process.argv.slice(2), {
     stdio: 'inherit',
-    env: {
-      ...process.env,
-      DOTNET_BUNDLE_EXTRACT_BASE_DIR: process.env.DOTNET_BUNDLE_EXTRACT_BASE_DIR ?? tmpdir(),
-    },
+    env: childEnv(),
   });
 
   child.on('error', (error: Error) => {

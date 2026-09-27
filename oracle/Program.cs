@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -41,6 +42,15 @@ internal static class Program
     /// spend minutes producing output nobody reads.
     /// </summary>
     private const int MaxErrorsPerFile = 1_000;
+
+    /// <summary>
+    /// Ceiling on a package's total uncompressed size, as its zip central directory
+    /// declares it. Far above any real Office document and far below what hurts: a
+    /// 2 MB package whose one part inflates to 2 GB drove this process past 4 GB of RSS,
+    /// which on a CI runner is the kernel's OOM-killer ending the run with no report at
+    /// all rather than a finding about one file.
+    /// </summary>
+    private const long MaxUncompressedBytes = 512L * 1024 * 1024;
 
     private const string Usage =
         "Usage: ooxml-validate [--format <FileFormatVersions>] [--files-from <path|->] [--] [<file> ...]\n" +
@@ -102,6 +112,18 @@ internal static class Program
     {
         try
         {
+            if (DeclaredTooLarge(file) is { } declared)
+            {
+                var error = new ValidationDiagnostic(
+                    "PackageTooLarge",
+                    "Limit",
+                    $"The package declares {declared} bytes uncompressed; the limit is " +
+                    $"{MaxUncompressedBytes}. It was not opened.",
+                    null,
+                    null);
+                return new FileValidationResult(file, false, [error]);
+            }
+
             using var document = OpenDocument(file);
             var validator = new OpenXmlValidator(format) { MaxNumberOfErrors = MaxErrorsPerFile };
             var errors = validator.Validate(document)
@@ -129,6 +151,38 @@ internal static class Program
                 null,
                 null);
             return new FileValidationResult(file, false, [error]);
+        }
+    }
+
+    /// <summary>
+    /// The package's declared uncompressed size, if it exceeds
+    /// <see cref="MaxUncompressedBytes"/>; otherwise null.
+    ///
+    /// Reads only the central directory, so it costs nothing on an honest package. The
+    /// directory is written by whoever made the file and can understate the truth; this
+    /// is the cheap filter for the ordinary case, and the GC heap limit the npm package
+    /// sets on this process is what bounds a package that lies. A file that is not a
+    /// readable zip at all is left to the SDK, whose own error is the finding the
+    /// diagnostic snapshot records for it.
+    /// </summary>
+    private static long? DeclaredTooLarge(string file)
+    {
+        try
+        {
+            using var archive = ZipFile.OpenRead(file);
+            long total = 0;
+            foreach (var entry in archive.Entries)
+            {
+                // Saturating: the sizes are the file's own claims, and a sum that
+                // overflowed into a negative would wave the package through.
+                total = entry.Length > long.MaxValue - total ? long.MaxValue : total + entry.Length;
+            }
+
+            return total > MaxUncompressedBytes ? total : null;
+        }
+        catch (Exception exception) when (exception is InvalidDataException or IOException)
+        {
+            return null;
         }
     }
 

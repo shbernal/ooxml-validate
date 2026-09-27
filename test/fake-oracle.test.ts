@@ -25,12 +25,16 @@ const scratch = mkdtempSync(join(tmpdir(), 'fake-oracle-test-'));
 const LOG = join(scratch, 'invocations.jsonl');
 
 process.env.OOXML_VALIDATE_BIN = FAKE;
+// A private temp root, so checking for leaked temp directories does not see the ones
+// integration.test.ts is creating at the same time in another process.
+process.env.TMPDIR = scratch;
 process.env.FAKE_ORACLE_LOG = LOG;
 delete process.env.OOXML_VALIDATE_NO_BATCH;
 
 interface Invocation {
   readonly args: readonly string[];
   readonly paths: readonly string[];
+  readonly heapLimit?: string;
 }
 
 function invocations(): Invocation[] {
@@ -97,6 +101,24 @@ describe('reports', {skip}, () => {
         ['--format', 'Microsoft365', '--files-from', '-'],
         ['--format', 'Office2010', '--files-from', '-'],
       ],
+    );
+  });
+
+  test('the oracle runs under a managed-heap ceiling, unless one is already set', async () => {
+    const original = process.env.DOTNET_GCHeapHardLimit;
+    try {
+      delete process.env.DOTNET_GCHeapHardLimit;
+      await validate(['/in/clean-1.pptx']);
+      process.env.DOTNET_GCHeapHardLimit = '0x10000000';
+      await validate(['/in/clean-2.pptx']);
+    } finally {
+      if (original === undefined) delete process.env.DOTNET_GCHeapHardLimit;
+      else process.env.DOTNET_GCHeapHardLimit = original;
+    }
+
+    assert.deepEqual(
+      invocations().map((call) => call.heapLimit),
+      ['0xC0000000', '0x10000000'],
     );
   });
 
@@ -256,7 +278,7 @@ describe('buffers', {skip}, () => {
 
   test('temp files are removed, on success and on failure', async () => {
     const stray = (): string[] =>
-      readdirSync(tmpdir()).filter((entry) => entry.startsWith('ooxml-validate-'));
+      readdirSync(scratch).filter((entry) => entry.startsWith('ooxml-validate-'));
     const before = stray();
 
     await validateBuffers([{bytes: new Uint8Array([1]), ext: 'pptx'}]);

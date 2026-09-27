@@ -52,6 +52,7 @@ Diagnostics go to stdout as JSON. Tool failures go to stderr as text.
 | `OOXML_VALIDATE_UPDATE_SNAPSHOT` | Re-record the fixture diagnostic snapshot. |
 | `CI` | Makes an unobtainable binary a hard error rather than a one-line notice. |
 | `DOTNET_BUNDLE_EXTRACT_BASE_DIR` | Where the single-file binary self-extracts. Defaulted by the package. |
+| `DOTNET_GCHeapHardLimit` | The oracle's managed-heap ceiling, in hex. The package defaults it to `0xC0000000` (3 GiB). |
 
 ## Binary resolution
 
@@ -95,7 +96,9 @@ partUri, xpath}]}]}`.
 Every input file appears with an explicit `valid` flag; clean files are not
 omitted. `file` is echoed verbatim. Output is deterministic. Diagnostics are
 capped at 1000 per file. `type` is one of `Schema`, `Semantic`,
-`MarkupCompatibility`, `Package`.
+`MarkupCompatibility`, `Package`, `Limit`. `Limit` means the package was not
+validated because it exceeds a bound the oracle enforces; today that is only
+`PackageTooLarge`, more than 512 MiB uncompressed as the zip directory declares it.
 
 The TypeScript `ValidationReport` / `ValidationResult` / `ValidationDiagnostic`
 types mirror this exactly and land with the Node package.
