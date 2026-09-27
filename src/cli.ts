@@ -10,6 +10,7 @@
 // binary, which is exactly what a consumer should not have to do by hand.
 
 import {spawn} from 'node:child_process';
+import {constants} from 'node:os';
 
 import {resolveValidator} from './resolve.ts';
 import {childEnv} from './run.ts';
@@ -31,15 +32,26 @@ async function main(): Promise<void> {
     env: childEnv(),
   });
 
+  // A failure to spawn can be followed by `close`; the spawn error is the answer, and
+  // `close` must not overwrite it.
+  let spawnFailed = false;
+
   child.on('error', (error: Error) => {
+    spawnFailed = true;
     process.stderr.write(`ooxml-validate: could not run ${binary}: ${error.message}\n`);
     process.exitCode = TOOL_FAILURE;
   });
 
   child.on('close', (code, signal) => {
-    // A signalled child has no exit code. Report it the way a shell would, so a
-    // killed oracle is distinguishable from one that decided to exit.
-    process.exitCode = signal ? 128 + 1 : (code ?? TOOL_FAILURE);
+    if (spawnFailed) return;
+    if (signal) {
+      // A signalled child has no exit code. Report it the way a shell would, 128 plus
+      // the signal's number, so an OOM-killed oracle reads as 137. A signal this
+      // platform cannot number gives a bare 128, which no real signal exit produces.
+      process.exitCode = 128 + (constants.signals[signal] ?? 0);
+      return;
+    }
+    process.exitCode = code ?? TOOL_FAILURE;
   });
 }
 

@@ -21,6 +21,7 @@
 //                     strict         — like echo, but exit 2 on a path that does not
 //                                      exist or is not .pptx/.xlsx/.docx, as the
 //                                      real oracle does
+//   FAKE_ORACLE_SIGNAL if set, the process sends itself this signal instead
 //   FAKE_ORACLE_LOG   if set, one JSON line per invocation is appended here
 
 import {appendFileSync, existsSync, readFileSync} from 'node:fs';
@@ -32,10 +33,19 @@ if (args.includes('--version')) {
   process.exit(0);
 }
 
-const format = args[args.indexOf('--format') + 1] ?? 'Microsoft365';
-const paths = readFileSync(0, 'utf8')
-  .split('\n')
-  .filter((line) => line !== '');
+const format = args.includes('--format')
+  ? (args[args.indexOf('--format') + 1] as string)
+  : 'Microsoft365';
+const paths = args.filter(
+  (arg, index) => !arg.startsWith('--') && !args[index - 1]?.startsWith('--'),
+);
+if (args.includes('--files-from')) {
+  paths.push(
+    ...readFileSync(0, 'utf8')
+      .split('\n')
+      .filter((line) => line !== ''),
+  );
+}
 const mode = process.env.FAKE_ORACLE_MODE ?? 'echo';
 
 if (process.env.FAKE_ORACLE_LOG) {
@@ -48,7 +58,10 @@ function refuse(message: string): never {
   process.exit(2);
 }
 
-if (mode === 'hang') {
+if (process.env.FAKE_ORACLE_SIGNAL) {
+  process.kill(process.pid, process.env.FAKE_ORACLE_SIGNAL as NodeJS.Signals);
+  setInterval(() => {}, 60_000);
+} else if (mode === 'hang') {
   process.on('SIGTERM', () => {});
   setInterval(() => {}, 60_000);
 } else {

@@ -35,6 +35,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- The `ooxml-validate` command reported every signalled oracle as exit 129
+  (SIGHUP). It now exits 128 plus the signal's number, as a shell does, so an
+  OOM-killed oracle reads as 137.
 - `probeFormats` given the same path twice returned one row with two counts per
   format, so `counts` no longer lined up with `formats`. Repeated paths now
   collapse to one row, and a result for a path that was not submitted is an error
