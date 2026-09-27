@@ -92,6 +92,12 @@ corpus and a committed diagnostic snapshot, and why a bump PR must show the
 snapshot delta in its own diff. A bump whose snapshot change nobody read is the
 failure this whole arrangement is designed to make impossible.
 
+**The gate has no oracle, so the Node half is tested against a fake one.**
+`test/fake-oracle.ts` is an executable script that speaks the CLI contract and is
+selected through `OOXML_VALIDATE_BIN`; `FAKE_ORACLE_MODE` scripts its failures.
+Code in `src/` that only the real-oracle suites reach is code the pre-push hook
+never runs — give it a fake-oracle test. The script must keep its executable bit.
+
 **Diagnostics get baselined, never suppressed.** When an SDK bump surfaces new
 errors in a consumer, the answer is to record them and file them — not to filter
 them out here.

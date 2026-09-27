@@ -6,8 +6,9 @@
 #
 # `node` installs no .NET at all, on purpose: the TypeScript half must be buildable
 # and testable without an SDK, because that is the promise made to consumers, and
-# this is where the claim gets tested rather than assumed. The oracle-dependent
-# tests skip there, which is correct — there is genuinely no oracle.
+# this is where the claim gets tested rather than assumed. Batching, spawning and
+# report handling run against the scripted stand-in in `test/fake-oracle.ts`; the
+# suites that need the real oracle skip there, which is correct — there is none.
 #
 # `oracle` is the .NET half: locked restore, xunit, and the diagnostic snapshot.
 #
