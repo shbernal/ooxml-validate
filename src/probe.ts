@@ -42,20 +42,38 @@ export interface ProbeReport {
  * batches instead of a few large ones.
  */
 export async function probeFormats(paths: readonly string[]): Promise<ProbeReport> {
-  const countsByFile = new Map<string, number[]>(paths.map((path) => [path, []]));
+  // One row per distinct path, as the oracle itself collapses exact duplicates. A
+  // repeated path would otherwise push a count per submission into one row, and
+  // `counts` would stop lining up with `formats`.
+  const unique = [...new Set(paths)];
+  const countsByFile = new Map<string, number[]>(unique.map((path) => [path, []]));
 
   for (const format of FILE_FORMATS) {
-    const report = await validate(paths, {format});
+    const report = await validate(unique, {format});
     for (const result of report.results) {
-      countsByFile.get(result.file)?.push(result.errors.length);
+      const counts = countsByFile.get(result.file);
+      if (!counts) {
+        throw new Error(
+          `ooxml-validate: probe got a result for ${result.file}, which was not submitted.`,
+        );
+      }
+      counts.push(result.errors.length);
     }
   }
 
-  const rows: ProbeRow[] = [...countsByFile].map(([file, counts]) => ({
-    file,
-    counts,
-    regresses: counts.some((count, index) => index > 0 && count < (counts[index - 1] as number)),
-  }));
+  const rows: ProbeRow[] = [...countsByFile].map(([file, counts]) => {
+    if (counts.length !== FILE_FORMATS.length) {
+      throw new Error(
+        `ooxml-validate: probe has ${counts.length} counts for ${file}, ` +
+          `expected one per format (${FILE_FORMATS.length}).`,
+      );
+    }
+    return {
+      file,
+      counts,
+      regresses: counts.some((count, index) => index > 0 && count < (counts[index - 1] as number)),
+    };
+  });
 
   return {
     formats: FILE_FORMATS,

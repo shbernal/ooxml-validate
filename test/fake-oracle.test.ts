@@ -318,4 +318,30 @@ describe('probeFormats', {skip}, () => {
     ]);
     assert.equal(report.violated, false);
   });
+
+  test('a repeated path is one row, with one count per format', async () => {
+    const report = await probeFormats(['/in/dirty.pptx', '/in/clean.pptx', '/in/dirty.pptx']);
+
+    assert.deepEqual(
+      report.rows.map((row) => [row.file, row.counts.length]),
+      [
+        ['/in/dirty.pptx', FILE_FORMATS.length],
+        ['/in/clean.pptx', FILE_FORMATS.length],
+      ],
+    );
+  });
+
+  test('an error count that drops as the target rises is flagged', async () => {
+    mode('regress');
+    const report = await probeFormats(['/in/dirty.pptx', '/in/clean.pptx']);
+
+    assert.deepEqual(
+      report.rows.map((row) => [row.file, row.regresses]),
+      [
+        ['/in/dirty.pptx', true],
+        ['/in/clean.pptx', false],
+      ],
+    );
+    assert.equal(report.violated, true);
+  });
 });

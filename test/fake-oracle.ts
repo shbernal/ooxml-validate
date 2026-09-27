@@ -15,6 +15,9 @@
 //                     reverse        — report in the opposite order to the input
 //                     fail-batch     — exit 2 when given more than one path
 //                     hang           — never exit, and ignore SIGTERM
+//                     regress        — like echo, but a `dirty` path is clean at
+//                                      Microsoft365, so its error count drops as the
+//                                      target rises
 //                     strict         — like echo, but exit 2 on a path that does not
 //                                      exist or is not .pptx/.xlsx/.docx, as the
 //                                      real oracle does
@@ -71,8 +74,11 @@ function report(): void {
   if (mode === 'rename') reported = paths.map((path) => `${path}.unsubmitted`);
   if (mode === 'reverse') reported = [...paths].reverse();
 
+  const dirty = (file: string): boolean =>
+    file.includes('dirty') && !(mode === 'regress' && format === 'Microsoft365');
+
   const results = reported.map((file) =>
-    file.includes('dirty')
+    dirty(file)
       ? {
           file,
           valid: false,
