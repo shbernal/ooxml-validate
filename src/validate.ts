@@ -41,8 +41,21 @@ export async function validate(
   };
 }
 
+/**
+ * `ext` becomes part of a temp filename, so anything but a bare extension could put
+ * the caller's bytes outside the temp directory — beyond the cleanup, onto whatever
+ * file is there. Refused rather than sanitized: the oracle picks the document type by
+ * extension, so a quietly rewritten one would change which diagnostics come back.
+ * A shape check, not the oracle's list, so it stays right when the oracle adds one.
+ */
 function normalizeExtension(ext: string): string {
-  return ext.startsWith('.') ? ext : `.${ext}`;
+  const normalized = ext.startsWith('.') ? ext : `.${ext}`;
+  if (!/^\.[A-Za-z0-9]+$/.test(normalized)) {
+    throw new TypeError(
+      `ooxml-validate: ext must be a bare file extension such as 'pptx', got ${JSON.stringify(ext)}`,
+    );
+  }
+  return normalized;
 }
 
 /**
@@ -90,6 +103,8 @@ export async function validateBuffers(
   if (inputs.length === 0) return [];
 
   const format: FileFormat = options.format ?? FILE_FORMAT;
+  // Every extension is checked before anything is written.
+  const extensions = inputs.map((input) => normalizeExtension(input.ext));
   const directory = await mkdtemp(join(tmpdir(), 'ooxml-validate-'));
 
   try {
@@ -99,10 +114,7 @@ export async function validateBuffers(
       inputs.map(async (input, index) => {
         // Index-prefixed so two buffers with the same label still get distinct paths.
         // The index is for uniqueness only — nothing reads it back.
-        const path = join(
-          directory,
-          `${String(index).padStart(5, '0')}${normalizeExtension(input.ext)}`,
-        );
+        const path = join(directory, `${String(index).padStart(5, '0')}${extensions[index]}`);
         await writeFile(path, input.bytes);
         identities.set(path, input.label ?? `buffer:${index}`);
         return path;

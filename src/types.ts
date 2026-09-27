@@ -86,8 +86,9 @@ export interface ValidateOptions {
 export interface BufferInput {
   readonly bytes: Uint8Array;
   /**
-   * The file extension, with or without the leading dot. The oracle dispatches on it
-   * to choose a document type, so it must match the package's real kind.
+   * The file extension, with or without the leading dot: letters and digits only, or
+   * the call throws a `TypeError`. The oracle dispatches on it to choose a document
+   * type, so it must match the package's real kind.
    */
   readonly ext: string;
   /**

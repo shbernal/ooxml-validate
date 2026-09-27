@@ -61,7 +61,9 @@ const results = await validateBuffers([
 The bytes go to temp files (the oracle only reads files), and the temp path is
 mapped back to your `label` before you see it. Correlation is by that map alone,
 never by array position — so results stay attributable however the oracle orders
-them. Temp files are cleaned up even if a batch crashes.
+them. Temp files are cleaned up even if a batch crashes. `ext` must be a bare
+extension (`'pptx'` or `'.pptx'`, letters and digits only); anything else throws a
+`TypeError` before a byte is written.
 
 Calls made while an invocation is in flight are coalesced into the next batch,
 which holds the process to **one validator child at a time** regardless of how

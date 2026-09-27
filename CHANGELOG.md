@@ -35,6 +35,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- `validateBuffer(s)` throws a `TypeError` for an `ext` that is not a bare
+  extension. It went into the temp filename unchecked, so `'../../x.pptx'` could
+  write the caller's bytes outside the temp directory, where cleanup never
+  reached them, overwriting whatever was there.
 - The `ooxml-validate` command reported every signalled oracle as exit 129
   (SIGHUP). It now exits 128 plus the signal's number, as a shell does, so an
   OOM-killed oracle reads as 137.

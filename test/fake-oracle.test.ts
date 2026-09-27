@@ -6,7 +6,7 @@
 // with a shebang is not something `spawn` can execute directly.
 
 import assert from 'node:assert/strict';
-import {mkdtempSync, readdirSync, readFileSync, rmSync} from 'node:fs';
+import {existsSync, mkdtempSync, readdirSync, readFileSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {after, beforeEach, describe, test} from 'node:test';
@@ -290,6 +290,26 @@ describe('buffers', {skip}, () => {
 
     const sizes = invocations().map((call) => call.paths.length);
     assert.deepEqual(sizes, [32, ...Array.from({length: 32}, () => 1), 8]);
+  });
+
+  test('an ext that is not a bare extension is refused before anything is written', async () => {
+    const escaped = join(scratch, 'escaped.pptx');
+    for (const ext of ['../../escaped.pptx', './../../escaped.pptx', '/abs.pptx', 'pp tx', '']) {
+      await assert.rejects(
+        validateBuffers([
+          {bytes: new Uint8Array([1]), ext: 'pptx'},
+          {bytes: new Uint8Array([2]), ext},
+        ]),
+        (error: unknown) => error instanceof TypeError && /bare file extension/.test(String(error)),
+      );
+    }
+
+    assert.equal(existsSync(escaped), false);
+    assert.deepEqual(invocations(), []);
+    assert.deepEqual(
+      readdirSync(scratch).filter((entry) => entry.startsWith('ooxml-validate-')),
+      [],
+    );
   });
 
   test('temp files are removed, on success and on failure', async () => {
