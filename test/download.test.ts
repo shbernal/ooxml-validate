@@ -131,7 +131,6 @@ async function download(
   Object.assign(process.env, {
     OOXML_VALIDATE_CACHE_DIR: cache,
     OOXML_VALIDATE_SKIP_ATTESTATION: '1',
-    TMPDIR: scratch,
   });
   for (const [key, value] of Object.entries(env)) {
     if (value === undefined) delete process.env[key];
@@ -156,9 +155,16 @@ async function download(
   return {cache, outcome};
 }
 
-/** Staging directories downloadBinary makes under the temp root. */
-const staging = (): string[] =>
-  readdirSync(scratch).filter((entry) => entry.startsWith('ooxml-validate-dl-'));
+/** Staging directories downloadBinary leaves beside the cached binary. */
+const staging = (cache: string): string[] => {
+  try {
+    return readdirSync(join(cache, VERSION, PLATFORM)).filter((entry) =>
+      entry.startsWith('.download-'),
+    );
+  } catch {
+    return [];
+  }
+};
 
 describe('downloadBinary', {skip: process.platform === 'win32' && 'needs a POSIX tar'}, () => {
   after(() => {
@@ -172,7 +178,7 @@ describe('downloadBinary', {skip: process.platform === 'win32' && 'needs a POSIX
     const path = await outcome;
     assert.equal(path, join(cache, VERSION, PLATFORM, 'ooxml-validate'));
     accessSync(path, constants.X_OK);
-    assert.deepEqual(staging(), []);
+    assert.deepEqual(staging(cache), []);
   });
 
   test('a checksum mismatch throws and caches nothing', async () => {
@@ -184,7 +190,7 @@ describe('downloadBinary', {skip: process.platform === 'win32' && 'needs a POSIX
 
     await assert.rejects(outcome, /checksum mismatch/);
     assert.deepEqual(filesUnder(cache), []);
-    assert.deepEqual(staging(), []);
+    assert.deepEqual(staging(cache), []);
   });
 
   test('an asset missing from SHA256SUMS throws and caches nothing', async () => {
@@ -257,6 +263,6 @@ describe('downloadBinary', {skip: process.platform === 'win32' && 'needs a POSIX
 
     await assert.rejects(outcome, /could not verify the build provenance/);
     assert.deepEqual(filesUnder(cache), []);
-    assert.deepEqual(staging(), []);
+    assert.deepEqual(staging(cache), []);
   });
 });

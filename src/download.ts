@@ -14,8 +14,7 @@
 
 import {execFile as execFileCallback} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {mkdir, mkdtemp, readFile, rename, rm, stat, writeFile} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
+import {mkdir, mkdtemp, rename, rm, stat, writeFile} from 'node:fs/promises';
 import {dirname, join} from 'node:path';
 import {promisify} from 'node:util';
 import type {PlatformId} from './platform.ts';
@@ -183,9 +182,13 @@ async function prepareMacOsBinary(
 /**
  * Downloads, verifies and caches the oracle binary for one version, returning its path.
  *
- * Everything happens in a temp directory and is moved into place only once both checks
- * pass, so a failure can never leave a half-written or unverified binary in the cache
- * for the next run to find and trust.
+ * Everything happens in a staging directory and is moved into place only once both
+ * checks pass, so a failure can never leave a half-written or unverified binary in the
+ * cache for the next run to find and trust.
+ *
+ * The staging directory sits beside the target rather than under the system temp root,
+ * so the final move is a `rename` within one filesystem: atomic, with no copy fallback
+ * for a crash to interrupt halfway through writing the cached binary.
  */
 export async function downloadBinary(options: DownloadOptions): Promise<string> {
   const platform = options.platform ?? requirePlatform();
@@ -197,7 +200,8 @@ export async function downloadBinary(options: DownloadOptions): Promise<string> 
   const tag = `v${version}`;
   const target = cachedBinaryPath(version, platform);
 
-  const staging = await mkdtemp(join(tmpdir(), 'ooxml-validate-dl-'));
+  await mkdir(dirname(target), {recursive: true});
+  const staging = await mkdtemp(join(dirname(target), '.download-'));
   try {
     onProgress(`fetching ${asset} ${tag} (~40 MB, once per version)`);
 
@@ -245,12 +249,7 @@ export async function downloadBinary(options: DownloadOptions): Promise<string> 
     // Move into the cache last, and only now. Anything that reaches this point has
     // passed both checks, so a binary present in the cache is a binary that was
     // verified — a reader of the cache never has to wonder how it got there.
-    await mkdir(dirname(target), {recursive: true});
-    await rename(extractedBinary, target).catch(async (cause: unknown) => {
-      // rename fails across filesystems, which tmpdir and the cache often are.
-      if ((cause as NodeJS.ErrnoException)?.code !== 'EXDEV') throw cause;
-      await writeFile(target, await readFile(extractedBinary), {mode: 0o755});
-    });
+    await rename(extractedBinary, target);
 
     onProgress(`cached at ${target}`);
     return target;
