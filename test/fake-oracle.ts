@@ -25,7 +25,9 @@
 //                                      exist or is not .pptx/.xlsx/.docx, as the
 //                                      real oracle does
 //   FAKE_ORACLE_SIGNAL if set, the process sends itself this signal instead
-//   FAKE_ORACLE_LOG   if set, one JSON line per invocation is appended here
+//   FAKE_ORACLE_DELAY_MS if set, wait this long before reporting
+//   FAKE_ORACLE_LOG   if set, one JSON line per invocation is appended here, stamped
+//                     with the time it started
 
 import {appendFileSync, existsSync, readFileSync} from 'node:fs';
 
@@ -55,7 +57,11 @@ if (args.includes('--files-from')) {
 }
 if (process.env.FAKE_ORACLE_LOG) {
   const heapLimit = process.env.DOTNET_GCHeapHardLimit;
-  appendFileSync(process.env.FAKE_ORACLE_LOG, `${JSON.stringify({args, paths, heapLimit})}\n`);
+  const startedAt = Date.now();
+  appendFileSync(
+    process.env.FAKE_ORACLE_LOG,
+    `${JSON.stringify({args, paths, heapLimit, startedAt})}\n`,
+  );
 }
 
 function refuse(message: string): never {
@@ -69,6 +75,8 @@ if (process.env.FAKE_ORACLE_SIGNAL) {
 } else if (mode === 'hang') {
   process.on('SIGTERM', () => {});
   setInterval(() => {}, 60_000);
+} else if (process.env.FAKE_ORACLE_DELAY_MS) {
+  setTimeout(report, Number(process.env.FAKE_ORACLE_DELAY_MS));
 } else {
   report();
 }

@@ -35,6 +35,7 @@ interface Invocation {
   readonly args: readonly string[];
   readonly paths: readonly string[];
   readonly heapLimit?: string;
+  readonly startedAt: number;
 }
 
 function invocations(): Invocation[] {
@@ -55,6 +56,7 @@ function mode(value: string): void {
 beforeEach(() => {
   rmSync(LOG, {force: true});
   delete process.env.FAKE_ORACLE_MODE;
+  delete process.env.FAKE_ORACLE_DELAY_MS;
   delete process.env.OOXML_VALIDATE_NO_BATCH;
   delete process.env.OOXML_VALIDATE_TIMEOUT_MS;
   resetResolution();
@@ -255,6 +257,24 @@ describe('failures', {skip}, () => {
 
     const sizes = invocations().map((call) => call.paths.length);
     assert.deepEqual(sizes, [3, 1, 1, 1]);
+  });
+
+  test('the retry still runs one oracle at a time', async () => {
+    // Each child lingers before exiting, so a retry that overlapped its children would
+    // start them within a few milliseconds of each other.
+    mode('fail-batch');
+    const delay = 100;
+    process.env.FAKE_ORACLE_DELAY_MS = String(delay);
+    await validate(['/in/clean-1.pptx', '/in/clean-2.pptx', '/in/clean-3.pptx']);
+
+    const starts = invocations()
+      .slice(1)
+      .map((call) => call.startedAt);
+    assert.equal(starts.length, 3);
+    for (let index = 1; index < starts.length; index++) {
+      const gap = (starts[index] as number) - (starts[index - 1] as number);
+      assert.ok(gap >= delay, `retries overlapped: started ${gap} ms apart`);
+    }
   });
 });
 

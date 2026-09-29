@@ -116,15 +116,18 @@ async function runBatch(batch: readonly QueueItem[], format: FileFormat): Promis
     // The batch-level error is deliberately dropped: it describes an invocation
     // covering 32 files, so it can only be less specific than what the retry is about
     // to produce for each of them.
-    await Promise.all(
-      batch.map(async (item) => {
-        try {
-          item.resolve(resultFor(await runOracle([item.path], format), item.path));
-        } catch (individual) {
-          item.reject(individual instanceof Error ? individual : new Error(String(individual)));
-        }
-      }),
-    );
+    //
+    // Sequential, not concurrent: the one-child bound holds on this path too. Fanning
+    // out would briefly mean 32 oracles at ~55 MB each, and under a hang, 32 children
+    // each running out a full timeout at once. The price is latency: a batch where
+    // every file hangs now takes one timeout per file, in turn.
+    for (const item of batch) {
+      try {
+        item.resolve(resultFor(await runOracle([item.path], format), item.path));
+      } catch (individual) {
+        item.reject(individual instanceof Error ? individual : new Error(String(individual)));
+      }
+    }
     return;
   }
 
