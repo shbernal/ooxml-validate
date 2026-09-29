@@ -119,13 +119,7 @@ async function runBatch(batch: readonly QueueItem[], format: FileFormat): Promis
     await Promise.all(
       batch.map(async (item) => {
         try {
-          const single = await runOracle([item.path], format);
-          const result = single.results[0];
-          if (!result) {
-            item.reject(new Error(`ooxml-validate: no result for ${item.path}.`));
-            return;
-          }
-          item.resolve({result, sdkVersion: single.sdkVersion, format: single.format});
+          item.resolve(resultFor(await runOracle([item.path], format), item.path));
         } catch (individual) {
           item.reject(individual instanceof Error ? individual : new Error(String(individual)));
         }
@@ -134,26 +128,34 @@ async function runBatch(batch: readonly QueueItem[], format: FileFormat): Promis
     return;
   }
 
-  // Keyed by path, never by position. Results are ordered by the oracle, not by
-  // submission — and with every input present and explicitly flagged there is nothing
-  // to infer from an absence, so a missing entry is a real internal error rather than
-  // a file that happened to be clean.
-  const byPath = new Map(report.results.map((result) => [result.file, result]));
-
   for (const item of batch) {
-    const result = byPath.get(item.path);
-    if (result) {
-      item.resolve({result, sdkVersion: report.sdkVersion, format: report.format});
-    } else {
-      item.reject(
-        new Error(
-          `ooxml-validate: the oracle returned no result for ${item.path}. ` +
-            'Every input file must appear in the report; this is a bug in the oracle ' +
-            'or in this package, not a clean file.',
-        ),
-      );
+    try {
+      item.resolve(resultFor(report, item.path));
+    } catch (error) {
+      item.reject(error as Error);
     }
   }
+}
+
+/**
+ * Picks one path's result out of a report.
+ *
+ * Keyed by path, never by position — not even for a report covering a single file.
+ * Results are ordered by the oracle, not by submission, and a one-file report whose
+ * only entry names some other path is a report about some other file. With every input
+ * present and explicitly flagged there is nothing to infer from an absence, so a
+ * missing entry is a real internal error rather than a file that happened to be clean.
+ */
+function resultFor(report: ValidationReport, path: string): BatchedResult {
+  const result = report.results.find((candidate) => candidate.file === path);
+  if (!result) {
+    throw new Error(
+      `ooxml-validate: the oracle returned no result for ${path}. ` +
+        'Every input file must appear in the report; this is a bug in the oracle ' +
+        'or in this package, not a clean file.',
+    );
+  }
+  return {result, sdkVersion: report.sdkVersion, format: report.format};
 }
 
 /**
@@ -162,11 +164,7 @@ async function runBatch(batch: readonly QueueItem[], format: FileFormat): Promis
  */
 export function enqueue(path: string, format: FileFormat = FILE_FORMAT): Promise<BatchedResult> {
   if (process.env[NO_BATCH]) {
-    return runOracle([path], format).then((report) => {
-      const result = report.results[0];
-      if (!result) throw new Error(`ooxml-validate: no result for ${path}.`);
-      return {result, sdkVersion: report.sdkVersion, format: report.format};
-    });
+    return runOracle([path], format).then((report) => resultFor(report, path));
   }
 
   return new Promise<BatchedResult>((resolve, reject) => {

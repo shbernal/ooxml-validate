@@ -172,10 +172,20 @@ describe('failures', {skip}, () => {
 
   test('a result for a path nobody submitted is refused, not guessed', async () => {
     mode('rename');
+    await assert.rejects(
+      validate(['/in/clean-1.pptx', '/in/clean-2.pptx']),
+      /no result for \/in\/clean-1\.pptx/,
+    );
+  });
+
+  test('a one-file report is still matched by path', async () => {
+    // A single result is no licence to take it as the caller's: it may name another file.
+    mode('rename');
     process.env.OOXML_VALIDATE_NO_BATCH = '1';
+    await assert.rejects(validate(['/in/clean.pptx']), /no result for \/in\/clean\.pptx/);
     await assert.rejects(
       validateBuffer(new Uint8Array([1]), {ext: 'pptx', label: 'mine'}),
-      /which was not submitted/,
+      /no result for /,
     );
   });
 
