@@ -11,6 +11,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.0.4] — 2026-09-29
+
 ### Changed
 
 - **Report shape:** every result carries `truncated`, `true` when the
@@ -62,6 +64,17 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   The path list travels one path per line, so such a path used to arrive as two:
   either a failure blamed on a fragment nobody submitted, or two other files
   validated in its place. The other files in the same batch are unaffected.
+- When a batch fails and is retried one file per process, those retries now run
+  one at a time rather than all at once. The concurrent retry briefly meant 32
+  oracles in parallel, and under a hang, 32 children each running out a full
+  timeout together.
+- A one-file report is matched to its input by path, as batch reports already
+  were, rather than by taking its only result. A report naming some other file is
+  now an error instead of being handed back as the caller's verdict.
+- A downloaded binary is staged beside the cache rather than under the system
+  temp directory, so moving it into place is an atomic rename. The copy fallback
+  used across filesystems could leave a half-written binary in the cache if
+  interrupted.
 
 ## [0.0.3] — 2026-08-15
 
