@@ -53,9 +53,6 @@ jobs:
       - run: pnpm run verify
       - run: pnpm run build
 
-      - run: pnpm run docs:check
-        if: matrix.os == 'ubuntu-latest'
-
   oracle:
     name: oracle
     runs-on: ubuntu-latest

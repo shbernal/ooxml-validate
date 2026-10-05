@@ -24,7 +24,6 @@ doc_type: "reference"
 | `pnpm run build` | Emits `dist/`. |
 | `pnpm run oracle:build` | `dotnet build`. Needs an SDK matching `global.json`. |
 | `pnpm run oracle:test` | `dotnet test`. |
-| `pnpm run docs:check` | Validates docs frontmatter and navigation. |
 
 ## Exit codes
 
