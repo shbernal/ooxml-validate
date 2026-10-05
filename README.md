@@ -201,8 +201,8 @@ writes one notice to stderr and returns `false`.
 
 ## In CI
 
-Nothing to install — but three things are worth setting up once, because both
-consumer repos hit all three.
+Nothing to install — but three things are worth setting up once, because every
+consumer hits all three.
 
 **Cache the binary, keyed on your lockfile.** The fetch is ~42 MB and happens on
 first use, not on `postinstall`. The lockfile is the right key because the npm

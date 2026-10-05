@@ -29,7 +29,8 @@ this only blocks work inside `oracle/`.
 
 **Symptom.** `dotnet build` or `dotnet restore` rewrites the lock file.
 
-**Cause.** `RestoreLockedMode` was bypassed, or a dependency version changed.
+**Cause.** A dependency version changed. Only CI and the release restore with
+`--locked-mode`; a local restore rewrites the lock file to match the projects.
 
 **Fix.** Do not commit the rewrite on its own. A moved lock file moves the
 validation baseline for every consumer — it belongs in a deliberate bump with the

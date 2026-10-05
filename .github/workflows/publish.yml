@@ -432,8 +432,8 @@ jobs:
 
       # `npm publish --dry-run` demotes a rejected identity from an error to a warning
       # and exits 0 — precisely backwards for a rehearsal, whose entire purpose is to
-      # catch that one failure. This is not hypothetical: the same mistake cost the
-      # sibling repo two version numbers before anyone read the log.
+      # catch that one failure. This is not hypothetical: the same mistake has cost
+      # another project two version numbers before anyone read the log.
       #
       # Two halves, because "no error" is not evidence. The exchange must have been
       # attempted — drop registry-url and npm asks nobody — and must not have been

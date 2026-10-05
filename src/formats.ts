@@ -27,7 +27,7 @@ export const FILE_FORMATS: readonly FileFormat[] = [
  *
  * `Microsoft365` is also the *strongest* available check, not merely the newest. The
  * SDK's per-version schemas differ only in how much markup they model: an older
- * version does not reject newer constructs, it skips them. Measured in `ts-pptx`: a
+ * version does not reject newer constructs, it skips them. Measured on a real
  * chartEx deck reports 0 errors at Office2007/2010/2013 and 4 at Office2016+ — the
  * older runs are blind, not permissive — while a corrupted core `<p:sp>` attribute is
  * caught identically at every version. Error count is therefore monotonically

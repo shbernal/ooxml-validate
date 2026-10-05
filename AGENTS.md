@@ -4,26 +4,45 @@ Working notes for agents and contributors in this repo. `README.md` is the
 consumer-facing document; this one is about how the repo is built and what it is
 easy to get wrong.
 
-## Pre-release
+## Pre-1.0
 
-This project has no GitHub release yet.
+The project is released (GitHub Releases + npm) but pre-1.0. The README promises
+no frozen contract before 1.0: the JSON report shape, the exit codes and the
+TypeScript types may change.
 
-- Treat it as pre-release and free to change.
-- Do not preserve backwards compatibility unless explicitly asked for.
+- Breaking changes are allowed, but never quietly: each one gets a CHANGELOG
+  entry and a version bump.
+- Do not add compatibility shims or deprecation paths unless explicitly asked.
 - Do not defer to prior architecture when it conflicts with the current goal.
 - Existing code, docs and plans are context, not constraints.
 - Prefer the simplest coherent architecture for the current direction.
 
-Once a release exists, compatibility and migration become real constraints and
-must be evaluated before breaking changes.
+## Releasing
+
+1. Set `version` in `package.json`, move `[Unreleased]` in `CHANGELOG.md` under
+   the new version, commit as `chore: release X.Y.Z`.
+2. `git tag vX.Y.Z && git push origin main vX.Y.Z`.
+
+The tag triggers `.github/workflows/publish.yml`: the lock-file and snapshot
+gate, five platform binaries, a GitHub Release with `SHA256SUMS` and provenance,
+then the npm publish. A hyphenated tag (`v0.1.0-rc.1`) is a pre-release and goes
+to npm under `next`. Rehearse without writing anything with
+`gh workflow run publish.yml -f tag=vX.Y.Z -f dry_run=true`.
+
+The tag must equal `package.json`'s version or the build fails. Never rename
+`publish.yml`: npm's trusted-publisher config names the file, and a rename
+surfaces as a misleading 404 on the next publish.
 
 ## What this repo is
 
-One shared OOXML validation oracle, used by both `~/Work/ts-pptx` and
-`~/Work/ts-xlsx`. Those two repos each carried their own divergent validator
-pinned to different Open XML SDK versions, so they validated against *different
-rule sets*. Removing that divergence is the reason this project exists — which
-means the single pin below is the point, not an implementation detail.
+One shared OOXML validation oracle. Projects that each carry their own validator
+wrapper drift onto different Open XML SDK versions and end up validating against
+*different rule sets*. Removing that divergence is the reason this project
+exists — which means the single pin below is the point, not an implementation
+detail.
+
+This is a public repo, independent of any project that consumes it. Do not name
+specific consumers in code, docs, comments or commit messages; say "consumers".
 
 ## Layout
 
@@ -32,6 +51,7 @@ src/          TypeScript package — binary resolution, batching, the public API
 oracle/       The .NET CLI. In this repo it is the product, not a tool beside it
 oracle.tests/ xunit tests for the oracle
 fixtures/     Shared corpus + the committed diagnostic snapshot
+docs/         Architecture, the SDK pin, reference, troubleshooting
 test/         Node tests for the TS half
 scripts/      Repo tooling
 ```
@@ -47,10 +67,15 @@ pnpm test              # node --test
 pnpm run build         # tsc -> dist/
 pnpm run oracle:build  # dotnet build (needs an SDK)
 pnpm run oracle:test   # dotnet test
+pnpm run oracle:snapshot   # re-record fixtures/diagnostics.snapshot.json
+pnpm run test:integration  # build the oracle, run the Node suite against it
 ```
 
-`pnpm run verify` is what the pre-push hook and CI both run. There is one
-definition of "everything" and it lives in `package.json`.
+`pnpm run verify` is the Node gate: the pre-push hook runs it, and so does CI's
+`node` job, so it has one definition, in `package.json`. CI also has jobs the
+hook cannot mirror: `oracle` (locked restore, xunit, snapshot), `integration`
+(Node suite against a source-built oracle) and `released` (download and verify
+the published binary for the current version).
 
 ## Conventions
 
@@ -88,9 +113,9 @@ position — results are ordered by the oracle, not by submission order.
 **The npm version and the binary version are one number.** See README. If you
 change one, change the other.
 
-**`DocumentFormat.OpenXml` is pinned in exactly one place, and a bump moves both
-consumers' baselines at once.** That is why `oracle/packages.lock.json` +
-`RestoreLockedMode` are non-optional, why this repo carries its own fixture
+**`DocumentFormat.OpenXml` is pinned in exactly one place, and a bump moves every
+consumer's baseline at once.** That is why `oracle/packages.lock.json` and
+the `--locked-mode` restores in CI and the release are non-optional, why this repo carries its own fixture
 corpus and a committed diagnostic snapshot, and why a bump PR must show the
 snapshot delta in its own diff. A bump whose snapshot change nobody read is the
 failure this whole arrangement is designed to make impossible.

@@ -3,7 +3,7 @@
 //
 // A pass-through to the resolved oracle: same arguments, same stdout, same stderr,
 // same exit code. Nothing is reinterpreted on the way through, so `pnpm exec
-// ooxml-validate deck.pptx` in a consumer repo and the oracle run by CI are the same
+// ooxml-validate deck.pptx` in a consumer and the oracle run by CI are the same
 // program answering the same question — which is the point of having one oracle.
 //
 // The only thing this layer adds is resolution: finding (and, once, downloading) the

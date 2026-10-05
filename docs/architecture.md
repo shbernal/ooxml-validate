@@ -22,7 +22,7 @@ Two halves that meet at a JSON report and a set of exit codes.
 | `src/` | The Node package: binary resolution, batching, buffer/temp-file handling, the public TypeScript API. |
 | `fixtures/` | The shared corpus and the committed diagnostic snapshot. |
 | `test/` | Node tests for the TypeScript half. |
-| `scripts/` | Repo tooling — hooks, docs. |
+| `scripts/` | Repo tooling: hook installation, fixture generation. |
 
 ## Boundaries
 
@@ -71,7 +71,8 @@ for people editing the oracle, not for normal use.
 ```
 caller ──▶ validate() / validateBuffer(s)()
               │
-              ├─ resolve binary:  env override → cache → source build → fail
+              ├─ resolve binary:  env override → cache → source build (opt-in)
+              │                   → download → fail
               ├─ batch:           queue drains through --files-from, MAX_BATCH=32,
               │                   at most one child process per Node process
               ├─ spawn oracle ──▶ JSON report on stdout, exit 0/1/2;

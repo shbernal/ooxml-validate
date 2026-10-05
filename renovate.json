@@ -46,7 +46,7 @@
       "groupName": "type definitions"
     },
     {
-      "description": "DocumentFormat.OpenXml is the pin this repo exists to centralize: after ts-pptx and ts-xlsx migrate, neither of them pins an Open XML SDK version and this is the only place it is watched. A bump here silently moves BOTH consumers' validation baselines, so it never batches with anything else, never automerges, and is labelled so the fixture-diagnostic delta in its diff gets read before merge. See docs/sdk-pin.md.",
+      "description": "DocumentFormat.OpenXml is the pin this repo exists to centralize: consumers do not pin an Open XML SDK version of their own, so this is the only place it is watched. A bump here silently moves EVERY consumer's validation baseline, so it never batches with anything else, never automerges, and is labelled so the fixture-diagnostic delta in its diff gets read before merge. See docs/sdk-pin.md.",
       "matchManagers": ["nuget"],
       "matchPackageNames": ["DocumentFormat.OpenXml"],
       "groupName": null,
@@ -54,7 +54,7 @@
       "labels": ["dependencies", "sdk-pin", "baseline-moving"],
       "schedule": ["before 6am on monday"],
       "prBodyNotes": [
-        ":warning: This PR moves the validation baseline for every consumer of this package. CI regenerates `fixtures/diagnostics.snapshot.json`; the delta MUST be in this PR's own diff and MUST be read before merging. Do not merge a snapshot change you have not accounted for."
+        ":warning: This PR moves the validation baseline for every consumer of this package. CI fails until `fixtures/diagnostics.snapshot.json` is re-recorded (`pnpm run oracle:snapshot`) and the lock files regenerated; the delta MUST be in this PR's own diff and MUST be read before merging. Do not merge a snapshot change you have not accounted for."
       ]
     },
     {

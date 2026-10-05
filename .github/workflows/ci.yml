@@ -1,8 +1,8 @@
-# The gate. One job, running the same `verify` script the pre-push hook runs —
+# The gate. The `node` job runs the same `verify` script the pre-push hook runs —
 # re-listing the individual checks here would be a second definition of
 # "everything" to keep in sync, and this is the copy that would drift.
 #
-# Three jobs.
+# Four jobs.
 #
 # `node` installs no .NET at all, on purpose: the TypeScript half must be buildable
 # and testable without an SDK, because that is the promise made to consumers, and
@@ -15,6 +15,8 @@
 # `integration` has both and runs the two halves against each other. It exists so
 # the skips in `node` are never the only outcome anywhere: every test in the suite
 # actually runs in exactly one of these jobs.
+#
+# `released` downloads, verifies and runs the published binary for this version.
 name: CI
 
 on:

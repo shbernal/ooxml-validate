@@ -4,10 +4,10 @@ namespace OoxmlValidate.Tests;
 /// The SDK-bump guardrail.
 ///
 /// This repo is the only place `DocumentFormat.OpenXml` is pinned, which means a bump
-/// here moves what *both* consumer repos consider a passing build — with nothing in the
+/// here moves what every consumer considers a passing build — with nothing in the
 /// bump's own diff to show it. Without this test the sequence is: Renovate opens a bump,
 /// CI is green because nothing here asserts anything about diagnostics, it releases, and
-/// the delta surfaces weeks later as a red build in a consumer repo inside a PR about
+/// the delta surfaces weeks later as a red build in a consumer inside a PR about
 /// something else, where the cheap way out is to baseline it away and get on with the
 /// real work. That is how a genuine writer defect gets silently accepted.
 ///
