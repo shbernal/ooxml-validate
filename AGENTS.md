@@ -59,7 +59,7 @@ scripts/      Repo tooling
 ## Commands
 
 ```sh
-pnpm install           # also installs git hooks (lefthook)
+pnpm install
 pnpm run verify        # lint + typecheck + test — the gate
 pnpm run lint          # biome
 pnpm run typecheck     # tsc --noEmit, src and harness
@@ -71,9 +71,9 @@ pnpm run oracle:snapshot   # re-record fixtures/diagnostics.snapshot.json
 pnpm run test:integration  # build the oracle, run the Node suite against it
 ```
 
-`pnpm run verify` is the Node gate: the pre-push hook runs it, and so does CI's
-`node` job, so it has one definition, in `package.json`. CI also has jobs the
-hook cannot mirror: `oracle` (locked restore, xunit, snapshot), `integration`
+`pnpm run verify` is the Node gate. CI's `node` job runs it, so it has one
+definition, in `package.json`. There are no git hooks: CI is the gate. CI also
+runs `commit-check` (no AI attribution in commit messages), `oracle` (locked restore, xunit, snapshot), `integration`
 (Node suite against a source-built oracle) and `released` (download and verify
 the published binary for the current version).
 
@@ -123,7 +123,7 @@ failure this whole arrangement is designed to make impossible.
 **The gate has no oracle, so the Node half is tested against a fake one.**
 `test/fake-oracle.ts` is an executable script that speaks the CLI contract and is
 selected through `OOXML_VALIDATE_BIN`; `FAKE_ORACLE_MODE` scripts its failures.
-Code in `src/` that only the real-oracle suites reach is code the pre-push hook
+Code in `src/` that only the real-oracle suites reach is code the `node` job
 never runs — give it a fake-oracle test. The script must keep its executable bit.
 
 **Diagnostics get baselined, never suppressed.** When an SDK bump surfaces new

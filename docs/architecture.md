@@ -22,7 +22,7 @@ Two halves that meet at a JSON report and a set of exit codes.
 | `src/` | The Node package: binary resolution, batching, buffer/temp-file handling, the public TypeScript API. |
 | `fixtures/` | The shared corpus and the committed diagnostic snapshot. |
 | `test/` | Node tests for the TypeScript half. |
-| `scripts/` | Repo tooling: hook installation, fixture generation. |
+| `scripts/` | Repo tooling: fixture generation. |
 
 ## Boundaries
 

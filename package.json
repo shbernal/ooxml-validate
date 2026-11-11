@@ -39,7 +39,6 @@
     "README.md"
   ],
   "scripts": {
-    "prepare": "node scripts/install-hooks.ts",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "pnpm run clean && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
@@ -67,7 +66,6 @@
   "devDependencies": {
     "@biomejs/biome": "2.6.6",
     "@types/node": "^24.19.2",
-    "lefthook": "^2.1.14",
     "typescript": "^7.0.2"
   }
 }
