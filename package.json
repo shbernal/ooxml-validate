@@ -52,11 +52,7 @@
     "oracle:snapshot": "OOXML_VALIDATE_UPDATE_SNAPSHOT=1 dotnet test --project oracle.tests/OoxmlValidate.Tests.csproj",
     "test:integration": "pnpm run oracle:build && OOXML_VALIDATE_BIN=\"$PWD/oracle/bin/Release/net10.0/ooxml-validate\" pnpm test",
     "verify": "pnpm run lint && pnpm run typecheck && pnpm run test",
-    "prepack": "pnpm run build",
-    "docs:list": "python3 scripts/docs-list.py",
-    "docs:check": "python3 scripts/docs-check.py",
-    "docs:new": "python3 scripts/docs-new.py",
-    "docs:init": "python3 scripts/docs-init.py"
+    "prepack": "pnpm run build"
   },
   "keywords": [
     "ooxml",

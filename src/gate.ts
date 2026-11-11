@@ -1,7 +1,5 @@
 // The CI gate.
 //
-// Ported from `ts-pptx`, where it was already correct, so `ts-xlsx` inherits it too.
-//
 // A missing validator silently skips every schema assertion a suite has, so a local
 // run can be green while proving far less than it appears to. That is a reasonable
 // local trade — the binary is a large download. It is never acceptable in CI, where

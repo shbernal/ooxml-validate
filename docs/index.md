@@ -18,9 +18,9 @@ schema validator, plus a Node package that resolves, runs and batches it.
 It validates `.pptx` / `.xlsx` / `.docx` packages against the Open XML SDK's
 schema validator and reports the diagnostics as JSON.
 
-It exists because two sibling projects — `ts-pptx` and `ts-xlsx` — each carried
-their own validator wrapper, pinned to *different* Open XML SDK versions, and so
-validated their output against different rule sets. This repo is the single place
+It exists because projects that each carry their own validator wrapper drift onto
+*different* Open XML SDK versions, and so validate their output against different
+rule sets. This repo is the single place
 that pin lives. Everything else here follows from that: the fixture corpus, the
 committed diagnostic snapshot, and the guardrail on bumping the SDK.
 
@@ -53,6 +53,7 @@ touching `oracle/`.
 | Bump `DocumentFormat.OpenXml` | [The SDK pin](sdk-pin.md) |
 | Look up the report shape, exit codes, env vars | [Reference](reference/index.md) |
 | Diagnose a failure | [Troubleshooting](troubleshooting.md) |
+| Cut a release | "Releasing" in `AGENTS.md` |
 
 ## Verification
 
@@ -60,5 +61,5 @@ touching `oracle/`.
 pnpm run verify
 ```
 
-That is the same command the pre-push hook and CI run. There is one definition of
-"everything" and it is the `verify` script in `package.json`.
+That is the same command the pre-push hook and CI's `node` job run. CI also
+gates the .NET half and the two halves together; see `.github/workflows/ci.yml`.

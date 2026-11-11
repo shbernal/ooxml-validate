@@ -5,12 +5,11 @@ The committed binaries under fixtures/ are the corpus. This script is how they
 were made, kept so the provenance of each one is checkable rather than folklore —
 it is not part of any build, and running it is not required to work on this repo.
 
-It will not run outside Santiago's machine: two of the six packages are copied
-from ~/Work/ts-pptx and ~/Work/ts-xlsx. That is fine. The corpus exists to detect
-*movement* in the Open XML SDK's diagnostics between versions, which requires the
-inputs to be frozen; a corpus regenerated from whatever those repos contain today
-would defeat its own purpose. If you need to change the corpus, change it
-deliberately and re-record the snapshot in the same commit.
+clean.pptx, clean.xlsx and dirty.xlsx are source fixtures: committed as they
+are, not generated. Everything else is built here from them or from nothing. The
+corpus exists to detect *movement* in the Open XML SDK's diagnostics between
+versions, which requires the inputs to be frozen. If you need to change the
+corpus, change it deliberately and re-record the snapshot in the same commit.
 
 Everything generated here is byte-deterministic: fixed zip timestamps, fixed
 entry order, no compression-level surprises. Two runs produce identical files.
@@ -20,7 +19,6 @@ Usage:  python3 scripts/make-fixtures.py
 
 from __future__ import annotations
 
-import shutil
 import sys
 import zipfile
 from pathlib import Path
@@ -32,15 +30,8 @@ FIXTURES = REPO / "fixtures"
 # earliest a zip can represent, so it is the conventional "no time here" value.
 FIXED_TIME = (1980, 1, 1, 0, 0, 0)
 
-TS_PPTX = Path.home() / "Work/ts-pptx"
-TS_XLSX = Path.home() / "Work/ts-xlsx"
-
-# Copied verbatim from the consumer repos. Both are Santiago's own fixtures.
-COPIES = [
-    (TS_PPTX / "test/read/fixtures/empty.pptx", "clean.pptx"),
-    (TS_XLSX / "test/corpus/fixtures/cells-without-r-attribute-imply-position/sample.xlsx", "clean.xlsx"),
-    (TS_XLSX / "test/corpus/fixtures/streaming-read-applies-date-format/sample.xlsx", "dirty.xlsx"),
-]
+# Committed as they are; the generated fixtures below are derived from these.
+SOURCES = ["clean.pptx", "clean.xlsx", "dirty.xlsx"]
 
 CONTENT_TYPES = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -56,10 +47,12 @@ ROOT_RELS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 </Relationships>
 """
 
+# The text predates the project's rename and stays as it is: the corpus is frozen,
+# and this script must reproduce the committed bytes, not improve on them.
 DOCUMENT_XML = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
 <w:body>
-<w:p{paragraph_attributes}><w:r><w:t>ooxml-validate fixture</w:t></w:r></w:p>
+<w:p{paragraph_attributes}><w:r><w:t>ooxml-validator fixture</w:t></w:r></w:p>
 <w:sectPr/>
 </w:body>
 </w:document>
@@ -131,20 +124,11 @@ def make_dirty_pptx(source: Path, target: Path) -> None:
 def main() -> int:
     FIXTURES.mkdir(exist_ok=True)
 
-    missing = [source for source, _ in COPIES if not source.is_file()]
+    missing = [name for name in SOURCES if not (FIXTURES / name).is_file()]
     if missing:
-        for source in missing:
-            print(f"missing source fixture: {source}", file=sys.stderr)
-        print(
-            "\nThis script only runs where the consumer repos are checked out. The "
-            "committed fixtures are the corpus; nothing here needs regenerating.",
-            file=sys.stderr,
-        )
+        for name in missing:
+            print(f"missing source fixture: fixtures/{name}", file=sys.stderr)
         return 1
-
-    for source, name in COPIES:
-        shutil.copyfile(source, FIXTURES / name)
-        print(f"copied  {name:14s} <- {source}")
 
     make_dirty_pptx(FIXTURES / "clean.pptx", FIXTURES / "dirty.pptx")
     print(f"patched {'dirty.pptx':14s} <- clean.pptx + undeclared attribute")

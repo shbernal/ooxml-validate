@@ -20,7 +20,7 @@ internal static class Cli
     /// Runs the CLI's entry point in-process and captures what it wrote where.
     ///
     /// Argument-level, deliberately: which stream carries what, and what the exit code
-    /// is, are the contract two consumer repos build their gates on. Testing the pieces
+    /// is, are the contract consumers build their gates on. Testing the pieces
     /// underneath would leave exactly that surface unasserted.
     /// </summary>
     public static CliResult Run(params string[] args) => RunWithStdin(null, args);

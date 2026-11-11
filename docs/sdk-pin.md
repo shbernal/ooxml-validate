@@ -18,37 +18,43 @@ doc_type: "reference"
 | .NET target | `net10.0` | `oracle/OoxmlValidate.csproj` |
 | SDK toolchain | `10.0.100` | `global.json` |
 | `DocumentFormat.OpenXml` | see the csproj | `oracle/OoxmlValidate.csproj` |
-| Transitive closure | locked | `oracle/packages.lock.json` + `RestoreLockedMode` |
+| Transitive closure | locked | `oracle/packages.lock.json`, restored with `--locked-mode` in CI and the release |
 
-`RestoreLockedMode` is not optional. Without it the lock file is a suggestion,
+The locked restore is not optional. Without it the lock file is a suggestion,
 and a transitive bump can move the validation baseline with nothing in any diff
 to show for it.
 
 ## Why it is centralized
 
-Before this repo, `ts-pptx` and `ts-xlsx` each carried their own validator: one
-on Open XML SDK 3.2.0, the other on 3.5.1. They therefore validated their output
-against *different rule sets*, which is the defect this project exists to remove.
+Two projects that each carry their own validator can sit on different Open XML
+SDK versions — 3.2.0 and 3.5.1, say — and so validate their output against
+*different rule sets*. That is the defect this project exists to remove.
 
 Centralizing the pin also centralizes the blast radius. A bump here silently
-moves both consumers' baselines at once. That is the trade, and the rest of this
+moves every consumer's baseline at once. That is the trade, and the rest of this
 page is how the trade is made safe.
 
 ## What a bump requires
 
 The corpus and the snapshot in `fixtures/` exist for exactly this. They make the
 effect of a bump visible in the bump's own diff instead of surfacing weeks later
-as a mystery failure in a consumer repo.
+as a mystery failure in a consumer.
 
 1. Bump the version in `oracle/OoxmlValidate.csproj`.
-2. Regenerate `oracle/packages.lock.json`.
-3. Regenerate the diagnostic snapshot over `fixtures/`.
+2. Regenerate the lock files: a plain `dotnet restore` of `oracle/` and
+   `oracle.tests/` rewrites them, since only CI restores in locked mode.
+3. Regenerate the diagnostic snapshot over `fixtures/`: `pnpm run oracle:snapshot`.
 4. **Read the snapshot delta.** Every changed diagnostic needs a verdict: a real
    defect in a consumer's writer, or a stricter/changed rule. Record the verdict
    in the PR.
 5. Merge only once the delta is accounted for.
 
-CI runs steps 3 and 5's check; step 4 is a human.
+CI does not regenerate anything. It restores in locked mode and fails on a
+snapshot that does not match, so steps 2 and 3 have to land in the bump's own
+diff. Step 4 is a human.
+
+Renovate labels these PRs `baseline-moving` and never groups or automerges them,
+so they cannot ride along in a batch nobody reads closely.
 
 One property a bump can move that the snapshot cannot show: the oracle is safe
 against entity-expansion and external-entity attacks only because the SDK's XML
@@ -56,17 +62,15 @@ reader refuses DTDs. Nothing in this repo sets that. `XmlHardeningTests` pins it
 by building both attacks and asserting the refusal message, and that the entity's
 target never appears in the output. If a bump turns those red, that is a security
 regression to fix before merging, not a baseline change to record. The same tests
-apply to any check added here that parses package XML itself. Renovate labels these PRs
-`baseline-moving` and never groups or automerges them, so they cannot ride along
-in a batch nobody reads closely.
+apply to any check added here that parses package XML itself.
 
 ## What the last bump actually cost
 
 Recorded because it is the only measurement anyone has of how much an SDK bump
 moves, and because it is easy to read the wrong lesson off it.
 
-Adopting this oracle put `ts-pptx` from **3.2.0 onto 3.5.1**. Before migrating it,
-its whole fixture corpus — 197 decks — went through both oracles at
+Adopting this oracle moved one consumer from **3.2.0 onto 3.5.1**. Before
+migrating it, its whole fixture corpus — 197 decks — went through both oracles at
 `Microsoft365` and the diagnostics were diffed: **identical, file for file and
 fingerprint for fingerprint.** Zero new, zero gone. The only difference anywhere
 in the corpus was how a corrupt package gets described, which is this project's

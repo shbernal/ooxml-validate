@@ -24,7 +24,7 @@ doc_type: "reference"
 | `pnpm run build` | Emits `dist/`. |
 | `pnpm run oracle:build` | `dotnet build`. Needs an SDK matching `global.json`. |
 | `pnpm run oracle:test` | `dotnet test`. |
-| `pnpm run docs:check` | Validates docs frontmatter and navigation. |
+| `pnpm run oracle:snapshot` | `dotnet test` with `OOXML_VALIDATE_UPDATE_SNAPSHOT=1`, re-recording the fixture snapshot. |
 
 ## Exit codes
 
@@ -56,8 +56,9 @@ Diagnostics go to stdout as JSON. Tool failures go to stderr as text.
 
 ## Binary resolution
 
-Order: `OOXML_VALIDATE_BIN` → cached download → download → source build (opt-in)
-→ fail with an actionable message.
+Order: `OOXML_VALIDATE_BIN` → cached download → source build (only with
+`OOXML_VALIDATE_FROM_SOURCE`, and then instead of downloading) → download
+(unless `OOXML_VALIDATE_NO_DOWNLOAD`) → fail with an actionable message.
 
 Nothing happens at install time. A package that reaches the network from a
 `postinstall` hook is hostile in CI and unusable offline, so the first call that
@@ -89,7 +90,7 @@ asks for, so it and `PACKAGE_VERSION` are the same number by construction.
 
 ## Report shape
 
-Frozen by the oracle and documented in full in `README.md`. In short:
+Defined by the oracle and documented in full in `README.md`. In short:
 `{format, sdkVersion, results[{file, valid, truncated, errors[{id, type,
 description, partUri, xpath}]}]}`.
 
@@ -101,7 +102,7 @@ validated because it exceeds a bound the oracle enforces; today that is only
 `PackageTooLarge`, more than 512 MiB uncompressed as the zip directory declares it.
 
 The TypeScript `ValidationReport` / `ValidationResult` / `ValidationDiagnostic`
-types mirror this exactly and land with the Node package.
+types mirror this exactly and are exported from the package.
 
 Until 1.0 this shape may change. Every change gets a CHANGELOG entry and a
 version bump.

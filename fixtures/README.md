@@ -10,11 +10,11 @@ one that is not a package at all.
 
 | File | Kind | What it is |
 |---|---|---|
-| `clean.pptx` | Presentation | Valid. From `ts-pptx`'s `test/read/fixtures/empty.pptx`. |
-| `clean.xlsx` | Spreadsheet | Valid. From `ts-xlsx`'s `cells-without-r-attribute-imply-position` corpus fixture. |
+| `clean.pptx` | Presentation | Valid. A minimal one-slide deck. |
+| `clean.xlsx` | Spreadsheet | Valid. A small sheet whose cells omit the `r` attribute and imply their position. |
 | `clean.docx` | Wordprocessing | Valid. Generated — a minimal three-part Word package. |
 | `dirty.pptx` | Presentation | `clean.pptx` with one undeclared attribute on the slide root → `Sch_UndeclaredAttribute`. |
-| `dirty.xlsx` | Spreadsheet | From `ts-xlsx`'s `streaming-read-applies-date-format` corpus fixture → three `Sem_AttributeValueDataTypeDetailed`. |
+| `dirty.xlsx` | Spreadsheet | A sheet with date-formatted cells → three `Sem_AttributeValueDataTypeDetailed`. |
 | `dirty.docx` | Wordprocessing | `clean.docx` with one undeclared attribute on a paragraph → `Sch_UndeclaredAttribute`. |
 | `corrupt.pptx` | — | Not a zip at all. Exercises `PackageOpenError`, and that a bad package is a *finding* (exit 1) rather than a tool failure (exit 2). |
 
@@ -43,7 +43,7 @@ specific bump.
 re-record after a deliberate change:
 
 ```sh
-OOXML_VALIDATE_UPDATE_SNAPSHOT=1 dotnet test oracle.tests/OoxmlValidate.Tests.csproj
+pnpm run oracle:snapshot
 ```
 
 Then **read the diff before committing it**. Re-recording without reading it is
@@ -55,7 +55,8 @@ Don't, casually. These packages are inputs to a comparison across SDK versions,
 so their value comes from being frozen — a corpus that drifts cannot tell you
 whether the SDK moved or the fixtures did.
 
-`scripts/make-fixtures.py` records how each file was made and can rebuild them,
-but it only runs where `~/Work/ts-pptx` and `~/Work/ts-xlsx` are checked out, and
-running it is never required. The committed binaries are the corpus. If you do
+`clean.pptx`, `clean.xlsx` and `dirty.xlsx` are source fixtures, committed as
+they are. `scripts/make-fixtures.py` rebuilds the other four from them and from
+nothing, deterministically; running it is never required. The committed binaries
+are the corpus. If you do
 change it, change the snapshot in the same commit and say why.

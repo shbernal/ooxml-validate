@@ -1,8 +1,8 @@
 // The report contract, mirroring the oracle's output exactly.
 //
-// These types are the single declaration both consumer repos assert against. Before
-// this package existed each kept its own private copy, which is how they drifted onto
-// different Open XML SDK versions without anyone noticing.
+// These types are the single declaration consumers assert against, rather than each
+// keeping a private copy — which is how separate validators drift onto different Open
+// XML SDK versions without anyone noticing.
 
 /**
  * A conformance target. The Open XML SDK's schemas differ per version in how much
