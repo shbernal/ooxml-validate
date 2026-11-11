@@ -11,6 +11,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.0.5] — 2026-11-11
+
+No change to the report shape, the exit codes or the oracle's behaviour.
+
+### Changed
+
+- Documentation and source comments describe the binary resolution order, the
+  lock-file enforcement and the CI jobs as they actually are, and refer to
+  "consumers" generically.
+- The package is built and published with the current CI toolchain (Node 26,
+  pnpm 12, actions pinned to commit digests).
+
 ## [0.0.4] — 2026-09-29
 
 ### Changed
