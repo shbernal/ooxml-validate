@@ -15,7 +15,7 @@ doc_type: "reference"
 
 | Command | What it does |
 |---|---|
-| `pnpm install` | Installs deps and the git hooks. |
+| `pnpm install` | Installs deps. |
 | `pnpm run verify` | Lint + typecheck + tests. The gate. |
 | `pnpm run lint` / `lint:fix` | Biome, over `src/`, `scripts/`, `test/`. |
 | `pnpm run typecheck` | `tsc --noEmit`, source and harness configs. |

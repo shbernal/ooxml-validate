@@ -61,5 +61,5 @@ touching `oracle/`.
 pnpm run verify
 ```
 
-That is the same command the pre-push hook and CI's `node` job run. CI also
+That is the same command CI's `node` job runs. CI also
 gates the .NET half and the two halves together; see `.github/workflows/ci.yml`.

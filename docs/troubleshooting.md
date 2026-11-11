@@ -63,16 +63,3 @@ breath, and until it does, the entry protects the wrong version.
 **Fix.** Exclude by bare package name in `pnpm-workspace.yaml`. Also worth knowing
 that `pnpm config get minimumReleaseAge` reports `undefined` while pnpm enforces
 1440 minutes, so the policy is invisible until it fires.
-
-## Git hooks did not install
-
-**Symptom.** Commits and pushes run no checks.
-
-**Check.** `git config --get core.hooksPath`.
-
-**Cause.** If it points outside this repo, `scripts/install-hooks.ts` reports that
-and deliberately leaves it alone rather than forcing lefthook's wrappers into a
-machine-wide hooks directory and renaming whatever stood there.
-
-**Fix.** Unset it, or just run `pnpm run verify` yourself before pushing. Hooks
-mirror CI; CI is the actual gate.
