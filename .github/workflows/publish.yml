@@ -106,7 +106,7 @@ jobs:
     needs: resolve
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.resolve.outputs.tag }}
           persist-credentials: false
@@ -165,7 +165,7 @@ jobs:
             r2r: true
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.resolve.outputs.tag }}
           persist-credentials: false
@@ -270,7 +270,7 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.resolve.outputs.tag }}
           persist-credentials: false
@@ -363,7 +363,7 @@ jobs:
       name: npm-publish
       url: https://www.npmjs.com/package/ooxml-validate
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.resolve.outputs.tag }}
           persist-credentials: false
@@ -376,7 +376,7 @@ jobs:
       #
       # No dependency cache: a release should resolve from the lockfile rather than
       # from whatever a previous run left behind.
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: .nvmrc
           registry-url: https://registry.npmjs.org
