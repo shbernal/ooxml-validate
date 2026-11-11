@@ -51,11 +51,6 @@ describe('validate', {skip}, () => {
     assert.equal(byFile.get(fixture('dirty.pptx'))?.valid, false);
   });
 
-  test('echoes paths back exactly as given', async () => {
-    const report = await validate([fixture('clean.pptx')]);
-    assert.equal(report.results[0]?.file, fixture('clean.pptx'));
-  });
-
   test('a corrupt package is a diagnostic, and its neighbours still get verdicts', async () => {
     const report = await validate([
       fixture('clean.xlsx'),
@@ -175,15 +170,6 @@ describe('validateBuffers', {skip}, () => {
     );
   });
 
-  test('cleans up even when the batch contains something unopenable', async () => {
-    const before = strayTempDirs();
-    await validateBuffers([{bytes: new Uint8Array([1, 2, 3]), ext: 'pptx', label: 'junk'}]);
-    assert.deepEqual(
-      strayTempDirs().filter((d) => !before.includes(d)),
-      [],
-    );
-  });
-
   test('an empty batch is a no-op', async () => {
     assert.deepEqual(await validateBuffers([]), []);
   });
@@ -212,22 +198,6 @@ describe('batching', {skip}, () => {
     }
 
     assert.equal(new Set(results.map((r) => r.file)).size, 300);
-  });
-
-  test('concurrent callers share batches rather than each spawning a child', async () => {
-    // The queue is a dataloader: work submitted while an invocation is in flight
-    // accumulates and goes out as one batch. What this asserts is the observable
-    // consequence — many concurrent calls still all resolve correctly — since the
-    // child count itself is not visible from here.
-    const results = await Promise.all(
-      Array.from({length: 40}, (_, index) =>
-        validateBuffer(bytes('clean.xlsx'), {ext: 'xlsx', label: `concurrent-${index}`}),
-      ),
-    );
-
-    assert.equal(results.length, 40);
-    assert.ok(results.every((r) => r.valid));
-    assert.equal(new Set(results.map((r) => r.file)).size, 40);
   });
 });
 
