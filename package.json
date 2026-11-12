@@ -42,9 +42,9 @@
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "pnpm run clean && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
-    "lint": "biome check --error-on-warnings src scripts test",
-    "lint:fix": "biome check --write --error-on-warnings src scripts test",
-    "format": "biome format --write src scripts test",
+    "lint": "oxlint --deny-warnings src scripts test && oxfmt --check src scripts test",
+    "lint:fix": "oxlint --fix src scripts test && oxfmt src scripts test",
+    "format": "oxfmt src scripts test",
     "test": "node --test \"test/**/*.test.ts\"",
     "oracle:build": "dotnet build oracle/OoxmlValidate.csproj -c Release",
     "oracle:test": "dotnet test --project oracle.tests/OoxmlValidate.Tests.csproj",
@@ -64,8 +64,10 @@
     "schema"
   ],
   "devDependencies": {
-    "@biomejs/biome": "2.6.6",
     "@types/node": "^24.19.2",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "oxlint-tsgolint": "^7.0.2006",
     "typescript": "^7.0.2"
   }
 }

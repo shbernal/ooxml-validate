@@ -17,6 +17,7 @@ import {createHash} from 'node:crypto';
 import {mkdir, mkdtemp, rename, rm, stat, writeFile} from 'node:fs/promises';
 import {dirname, join} from 'node:path';
 import {promisify} from 'node:util';
+
 import type {PlatformId} from './platform.ts';
 import {assetName, cachedBinaryPath, executableName, requirePlatform} from './platform.ts';
 

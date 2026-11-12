@@ -51,7 +51,7 @@ test('locally it warns once on stderr and returns false', async () => {
   await withEnv({CI: undefined, OOXML_VALIDATE_BIN: '/nonexistent/ooxml-validate'}, async () => {
     const written: string[] = [];
     const original = process.stderr.write.bind(process.stderr);
-    // biome-ignore lint/suspicious/noExplicitAny: replacing a stream method for capture
+    // oxlint-disable-next-line typescript/no-explicit-any -- replacing a stream method for capture
     (process.stderr as any).write = (chunk: string) => {
       written.push(String(chunk));
       return true;
@@ -62,7 +62,7 @@ test('locally it warns once on stderr and returns false', async () => {
       assert.equal(await validatorAvailable(), false);
       assert.equal(await validatorAvailable(), false);
     } finally {
-      // biome-ignore lint/suspicious/noExplicitAny: restoring the captured method
+      // oxlint-disable-next-line typescript/no-explicit-any -- restoring the captured method
       (process.stderr as any).write = original;
     }
 

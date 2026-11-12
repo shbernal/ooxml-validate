@@ -61,7 +61,7 @@ scripts/      Repo tooling
 ```sh
 pnpm install
 pnpm run verify        # lint + typecheck + test — the gate
-pnpm run lint          # biome
+pnpm run lint          # oxlint (type-aware) + oxfmt --check
 pnpm run typecheck     # tsc --noEmit, src and harness
 pnpm test              # node --test
 pnpm run build         # tsc -> dist/
@@ -89,7 +89,8 @@ the published binary for the current version).
   into `dist/`. `erasableSyntaxOnly` is on so tsc rejects the syntax
   type-stripping cannot handle (enums, namespaces, parameter properties) at the
   gate rather than at runtime.
-- Biome owns formatting and linting for `src/`, `scripts/`, `test/`. The C# half
+- oxlint (type-aware, through oxlint-tsgolint) and oxfmt own linting and
+  formatting for `src/`, `scripts/`, `test/`. The C# half
   follows .NET convention via `.editorconfig`.
 - `author` metadata is `shbernal`.
 

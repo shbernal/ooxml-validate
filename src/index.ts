@@ -3,11 +3,7 @@
 export {FILE_FORMAT, FILE_FORMATS, isFileFormat} from './formats.ts';
 export {validatorAvailable} from './gate.ts';
 export type {PlatformId} from './platform.ts';
-export {
-  cacheRoot,
-  currentPlatform,
-  SUPPORTED_PLATFORMS,
-} from './platform.ts';
+export {cacheRoot, currentPlatform, SUPPORTED_PLATFORMS} from './platform.ts';
 export type {ProbeReport, ProbeRow} from './probe.ts';
 export {probeFormats} from './probe.ts';
 export {resolveValidator, validatorPath} from './resolve.ts';

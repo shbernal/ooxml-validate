@@ -1,0 +1,44 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "node"],
+  "categories": {
+    "correctness": "error"
+  },
+  // Type-aware rules through oxlint-tsgolint, on every run: promise misuse is the
+  // class of bug that matters most in code that spawns and batches processes.
+  "options": {"typeAware": true},
+  "ignorePatterns": ["dist/**", ".tmp/**", "fixtures/**"],
+  "rules": {
+    "no-console": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-floating-promises": [
+      "error",
+      {
+        // `test()` from node:test returns a promise the runner already tracks.
+        "allowForKnownSafeCalls": [
+          {"from": "package", "package": "node:test", "name": ["test", "describe", "it", "suite"]}
+        ]
+      }
+    ],
+    "typescript/no-misused-promises": "error",
+    "typescript/await-thenable": "error",
+    "typescript/switch-exhaustiveness-check": "error",
+    "no-unused-vars": [
+      "error",
+      {"argsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_", "ignoreRestSiblings": true}
+    ]
+  },
+  "overrides": [
+    {
+      // The CLI, repo scripts and tests talk to a terminal on purpose.
+      "files": ["src/cli.ts", "scripts/**", "test/**"],
+      "rules": {"no-console": "off"}
+    },
+    {
+      // A helper declared inside the test that uses it reads better than one
+      // hoisted away from its only caller.
+      "files": ["test/**"],
+      "rules": {"unicorn/consistent-function-scoping": "off"}
+    }
+  ]
+}

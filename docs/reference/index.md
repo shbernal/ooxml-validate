@@ -17,7 +17,7 @@ doc_type: "reference"
 |---|---|
 | `pnpm install` | Installs deps. |
 | `pnpm run verify` | Lint + typecheck + tests. The gate. |
-| `pnpm run lint` / `lint:fix` | Biome, over `src/`, `scripts/`, `test/`. |
+| `pnpm run lint` / `lint:fix` | oxlint (type-aware) and oxfmt, over `src/`, `scripts/`, `test/`. |
 | `pnpm run typecheck` | `tsc --noEmit`, source and harness configs. |
 | `pnpm test` | `node --test`. The Node half runs against `test/fake-oracle.ts`; the real-oracle suites skip without a binary. |
 | `pnpm run test:integration` | Builds the oracle, then runs the whole suite against it. |
