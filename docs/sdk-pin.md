@@ -20,6 +20,11 @@ doc_type: "reference"
 | `DocumentFormat.OpenXml` | see the csproj | `oracle/OoxmlValidate.csproj` |
 | Transitive closure | locked | `oracle/packages.lock.json`, restored with `--locked-mode` in CI and the release |
 
+The SDK version in `global.json` is a floor rather than a pin. It rolls forward
+to any newer feature band within 10.0, CI installs the newest `10.0.x`, and
+Renovate leaves it alone, because raising it breaks every machine with an older
+10.0 SDK and buys nothing while the oracle targets `net10.0`.
+
 The locked restore is not optional. Without it the lock file is a suggestion,
 and a transitive bump can move the validation baseline with nothing in any diff
 to show for it.

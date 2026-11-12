@@ -75,7 +75,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
         with:
-          global-json-file: global.json
+          dotnet-version: 10.0.x
 
       # Locked mode, not a convenience flag: without it the lock file is a
       # suggestion, and a transitive bump can move the validation baseline for every
@@ -105,7 +105,7 @@ jobs:
           cache: pnpm
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
         with:
-          global-json-file: global.json
+          dotnet-version: 10.0.x
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run oracle:build
