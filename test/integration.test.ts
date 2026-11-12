@@ -144,7 +144,8 @@ describe('validateBuffers', {skip}, () => {
     ]);
 
     assert.equal(results.length, 2);
-    assert.deepEqual(results.map((r) => r.valid).sort((a, b) => Number(a) - Number(b)),
+    assert.deepEqual(
+      results.map((r) => r.valid).sort((a, b) => Number(a) - Number(b)),
       [false, true],
     );
   });
