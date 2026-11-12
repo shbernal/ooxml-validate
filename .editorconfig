@@ -1,11 +1,11 @@
 # EditorConfig — baseline for editors and agents writing files that fall outside
-# the formatter's reach. Biome owns src/, scripts/ and test/ (see the `format`
+# the formatter's reach. oxfmt owns src/, scripts/ and test/ (see the `format`
 # script in package.json); everything else — Markdown, YAML, the .NET sources,
 # most config — relies on this.
 #
-# Duplicate, not derive: Biome does not read .editorconfig by default, so nothing
-# enforces the agreement between this file and biome.json. When a formatting
-# option changes in biome.json, change it here in the same commit.
+# Duplicate, not derive: nothing enforces the agreement between this file and
+# .oxfmtrc.json. When a formatting option changes in .oxfmtrc.json, change it
+# here in the same commit.
 # https://editorconfig.org
 root = true
 
@@ -17,7 +17,7 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
 
-# Mirrors biome.json (`indentStyle: space`, `indentWidth: 2`, `lineWidth: 100`).
+# Mirrors .oxfmtrc.json (`tabWidth: 2`, `printWidth: 100`).
 [*.{ts,js,mjs,json,jsonc}]
 indent_style = space
 indent_size = 2

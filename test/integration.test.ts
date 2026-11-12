@@ -144,7 +144,9 @@ describe('validateBuffers', {skip}, () => {
     ]);
 
     assert.equal(results.length, 2);
-    assert.deepEqual(results.map((r) => r.valid).sort(), [false, true]);
+    assert.deepEqual(results.map((r) => r.valid).sort((a, b) => Number(a) - Number(b)),
+      [false, true],
+    );
   });
 
   test('unlabelled buffers get distinct generated handles', async () => {
