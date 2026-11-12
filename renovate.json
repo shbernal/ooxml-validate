@@ -58,6 +58,11 @@
       ]
     },
     {
+      "description": "global.json's SDK version is a floor, not a pin: `rollForward: latestFeature` never rolls back a feature band or across a major, so every bump stops `pnpm run oracle:build` on a machine with an older 10.0 SDK, and nothing here needs a newer one while the oracle targets net10.0. CI installs the newest 10.0.x through setup-dotnet. Raise the floor by hand when a feature is needed.",
+      "matchDepNames": ["dotnet-sdk"],
+      "enabled": false
+    },
+    {
       "description": "The rest of the NuGet tree (test-only packages) batches normally.",
       "matchManagers": ["nuget"],
       "matchPackageNames": ["!DocumentFormat.OpenXml"],

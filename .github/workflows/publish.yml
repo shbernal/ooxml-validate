@@ -112,7 +112,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
         with:
-          global-json-file: global.json
+          dotnet-version: 10.0.x
 
       # This has to be its own step rather than `-p:RestoreLockedMode=true` on the
       # publish, and the reason is not a preference. Publishing adds two things the
@@ -171,7 +171,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
         with:
-          global-json-file: global.json
+          dotnet-version: 10.0.x
 
       - name: The tag and the package version must be the same claim
         shell: bash
